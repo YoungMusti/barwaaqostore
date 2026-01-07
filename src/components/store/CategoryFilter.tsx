@@ -10,6 +10,7 @@ interface CategoryFilterProps {
   showSaleOnly?: boolean;
   onSaleSelect?: () => void;
   saleCount?: number;
+  categoryStockMap?: Record<string, number>;
 }
 
 export function CategoryFilter({ 
@@ -18,11 +19,10 @@ export function CategoryFilter({
   onSelectCategory,
   showSaleOnly = false,
   onSaleSelect,
-  saleCount = 0
+  saleCount = 0,
+  categoryStockMap = {}
 }: CategoryFilterProps) {
   const { t, language } = useLanguage();
-
-  const enabledCategories = categories.filter(cat => cat.enabled);
 
   return (
     <div className="flex flex-wrap gap-2 justify-center">
@@ -54,20 +54,40 @@ export function CategoryFilter({
         </button>
       )}
 
-      {enabledCategories.map(category => (
-        <button
-          key={category.id}
-          onClick={() => onSelectCategory(category.id)}
-          className={cn(
-            "px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200",
-            selectedCategory === category.id
-              ? "bg-primary text-primary-foreground shadow-warm"
-              : "bg-secondary text-secondary-foreground hover:bg-primary/10"
-          )}
-        >
-          {language === 'so' ? category.name_somali : category.name}
-        </button>
-      ))}
+      {categories.map(category => {
+        const hasStock = (categoryStockMap[category.id] || 0) > 0;
+        const isDisabled = !category.enabled;
+        const isHidden = isDisabled || !hasStock;
+        
+        // Auto-hide categories with no stock or disabled
+        if (isHidden) {
+          return (
+            <button
+              key={category.id}
+              disabled
+              className="px-5 py-2.5 rounded-full text-sm font-medium bg-muted text-muted-foreground/50 cursor-not-allowed line-through"
+            >
+              {language === 'so' ? category.name_somali : category.name}
+              {!hasStock && ' (0)'}
+            </button>
+          );
+        }
+        
+        return (
+          <button
+            key={category.id}
+            onClick={() => onSelectCategory(category.id)}
+            className={cn(
+              "px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200",
+              selectedCategory === category.id
+                ? "bg-primary text-primary-foreground shadow-warm"
+                : "bg-secondary text-secondary-foreground hover:bg-primary/10"
+            )}
+          >
+            {language === 'so' ? category.name_somali : category.name}
+          </button>
+        );
+      })}
     </div>
   );
 }
