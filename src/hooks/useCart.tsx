@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { CartItem, Product } from '@/types/database';
 import { toast } from 'sonner';
 
@@ -16,9 +16,29 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const CART_STORAGE_KEY = 'barwaago_cart';
+
+// Get the effective price (sale price if on sale, otherwise regular price)
+function getEffectivePrice(product: Product): number {
+  return product.is_on_sale && product.sale_price ? product.sale_price : product.price;
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    // Load cart from localStorage on init
+    try {
+      const stored = localStorage.getItem(CART_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isOpen, setIsOpen] = useState(false);
+
+  // Persist cart to localStorage
+  useEffect(() => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  }, [items]);
 
   const addItem = (product: Product, quantity = 1) => {
     if (product.stock < 1) {
@@ -37,7 +57,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         toast.success(`Updated quantity in cart`);
         return prev.map(item =>
           item.product.id === product.id
-            ? { ...item, quantity: newQuantity }
+            ? { ...item, quantity: newQuantity, product } // Update product data
             : item
         );
       }
@@ -70,10 +90,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => {
     setItems([]);
+    localStorage.removeItem(CART_STORAGE_KEY);
   };
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmount = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  // Use effective price (sale price if on sale)
+  const totalAmount = items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0);
 
   return (
     <CartContext.Provider
@@ -101,3 +123,6 @@ export function useCart() {
   }
   return context;
 }
+
+// Export helper for use in other components
+export { getEffectivePrice };

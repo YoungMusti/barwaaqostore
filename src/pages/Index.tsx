@@ -31,6 +31,15 @@ export default function Index() {
     fetchData();
   }, []);
 
+  // Calculate stock per category
+  const categoryStockMap = categories.reduce((acc, cat) => {
+    const totalStock = products
+      .filter(p => p.category_id === cat.id)
+      .reduce((sum, p) => sum + p.stock, 0);
+    acc[cat.id] = totalStock;
+    return acc;
+  }, {} as Record<string, number>);
+
   const filteredProducts = products.filter(p => {
     // Filter by sale if selected
     if (showSaleOnly && !p.is_on_sale) return false;
@@ -40,9 +49,10 @@ export default function Index() {
       return p.category_id === selectedCategory;
     }
     
-    // If no category selected, show products from enabled categories
+    // If no category selected, show products from enabled categories with stock
     const cat = categories.find(c => c.id === p.category_id);
-    return !cat || cat.enabled;
+    if (!cat) return true; // No category assigned - show it
+    return cat.enabled && categoryStockMap[cat.id] > 0;
   });
 
   const handleCategorySelect = (categoryId: string | null) => {
@@ -72,6 +82,7 @@ export default function Index() {
             showSaleOnly={showSaleOnly}
             onSaleSelect={handleSaleSelect}
             saleCount={saleCount}
+            categoryStockMap={categoryStockMap}
           />
         </div>
 
