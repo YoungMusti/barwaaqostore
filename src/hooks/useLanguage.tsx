@@ -11,9 +11,10 @@ interface Translations {
 
 const translations: Translations = {
   // Header
-  shopName: { en: 'SOLE', so: 'SOLE' },
+  shopName: { en: 'BARWAAGO', so: 'BARWAAGO' },
   tagline: { en: 'Premium Footwear', so: 'Kabo Tayada Sare' },
   cart: { en: 'Cart', so: 'Gaariga' },
+  sale: { en: 'Sale', so: 'Qiimo Jaban' },
   admin: { en: 'Admin', so: 'Maamul' },
   
   // Categories

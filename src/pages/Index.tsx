@@ -13,6 +13,7 @@ export default function Index() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showSaleOnly, setShowSaleOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useLanguage();
 
@@ -30,12 +31,32 @@ export default function Index() {
     fetchData();
   }, []);
 
-  const filteredProducts = selectedCategory
-    ? products.filter(p => p.category_id === selectedCategory)
-    : products.filter(p => {
-        const cat = categories.find(c => c.id === p.category_id);
-        return !cat || cat.enabled;
-      });
+  const filteredProducts = products.filter(p => {
+    // Filter by sale if selected
+    if (showSaleOnly && !p.is_on_sale) return false;
+    
+    // Filter by category if selected
+    if (selectedCategory) {
+      return p.category_id === selectedCategory;
+    }
+    
+    // If no category selected, show products from enabled categories
+    const cat = categories.find(c => c.id === p.category_id);
+    return !cat || cat.enabled;
+  });
+
+  const handleCategorySelect = (categoryId: string | null) => {
+    setSelectedCategory(categoryId);
+    setShowSaleOnly(false);
+  };
+
+  const handleSaleSelect = () => {
+    setShowSaleOnly(!showSaleOnly);
+    setSelectedCategory(null);
+  };
+
+  // Count sale items
+  const saleCount = products.filter(p => p.is_on_sale).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,7 +68,10 @@ export default function Index() {
           <CategoryFilter
             categories={categories}
             selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
+            onSelectCategory={handleCategorySelect}
+            showSaleOnly={showSaleOnly}
+            onSaleSelect={handleSaleSelect}
+            saleCount={saleCount}
           />
         </div>
 

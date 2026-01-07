@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Product, Category, Order } from '@/types/database';
+import { Product, Category, Order, OrderItem } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -10,13 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { LogOut, Package, ShoppingCart, Grid, Plus, Loader2, Pencil, Trash2, Upload, Users, Key } from 'lucide-react';
+import { LogOut, Package, ShoppingCart, Grid, Plus, Loader2, Pencil, Trash2, Upload, Users, Key, Search, BarChart3, ChevronDown, ChevronUp, DollarSign, TrendingUp, Tag } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'users'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'users' | 'analytics'>('products');
   const [isLoading, setIsLoading] = useState(true);
   const [productDialog, setProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -27,6 +27,9 @@ export default function AdminDashboard() {
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [creatingAdmin, setCreatingAdmin] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -36,7 +39,9 @@ export default function AdminDashboard() {
     price: '',
     stock: '',
     category_id: '',
-    image_url: ''
+    image_url: '',
+    is_on_sale: false,
+    sale_price: ''
   });
 
   useEffect(() => {
@@ -125,7 +130,9 @@ export default function AdminDashboard() {
         price: product.price.toString(),
         stock: product.stock.toString(),
         category_id: product.category_id || '',
-        image_url: product.image_url || ''
+        image_url: product.image_url || '',
+        is_on_sale: product.is_on_sale || false,
+        sale_price: product.sale_price?.toString() || ''
       });
     } else {
       setEditingProduct(null);
@@ -135,7 +142,9 @@ export default function AdminDashboard() {
         price: '',
         stock: '',
         category_id: '',
-        image_url: ''
+        image_url: '',
+        is_on_sale: false,
+        sale_price: ''
       });
     }
     setProductDialog(true);
@@ -153,7 +162,9 @@ export default function AdminDashboard() {
       price: parseFloat(productForm.price),
       stock: parseInt(productForm.stock) || 0,
       category_id: productForm.category_id || null,
-      image_url: productForm.image_url || null
+      image_url: productForm.image_url || null,
+      is_on_sale: productForm.is_on_sale,
+      sale_price: productForm.is_on_sale && productForm.sale_price ? parseFloat(productForm.sale_price) : null
     };
 
     if (editingProduct) {
@@ -221,7 +232,6 @@ export default function AdminDashboard() {
 
     setCreatingAdmin(true);
     
-    // Sign up the new admin
     const { data, error } = await supabase.auth.signUp({
       email: newAdminEmail,
       password: newAdminPassword,
@@ -237,7 +247,6 @@ export default function AdminDashboard() {
     }
 
     if (data.user) {
-      // Assign admin role
       const { error: roleError } = await supabase.from('user_roles').insert({
         user_id: data.user.id,
         role: 'admin'
@@ -255,6 +264,51 @@ export default function AdminDashboard() {
     setCreatingAdmin(false);
   }
 
+  // Filtered products
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (p.description?.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesCategory = filterCategory === 'all' || p.category_id === filterCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, filterCategory]);
+
+  // Analytics calculations
+  const analytics = useMemo(() => {
+    const totalRevenue = orders
+      .filter(o => o.status === 'paid' || o.status === 'completed')
+      .reduce((sum, o) => sum + o.total_amount, 0);
+
+    const ordersByStatus = {
+      pending: orders.filter(o => o.status === 'pending').length,
+      paid: orders.filter(o => o.status === 'paid').length,
+      processing: orders.filter(o => o.status === 'processing').length,
+      completed: orders.filter(o => o.status === 'completed').length,
+      cancelled: orders.filter(o => o.status === 'cancelled').length,
+    };
+
+    // Best selling products - count from order items
+    const productSales: Record<string, { name: string; quantity: number; revenue: number }> = {};
+    orders
+      .filter(o => o.status === 'paid' || o.status === 'completed')
+      .forEach(order => {
+        order.order_items?.forEach(item => {
+          if (!productSales[item.product_name]) {
+            productSales[item.product_name] = { name: item.product_name, quantity: 0, revenue: 0 };
+          }
+          productSales[item.product_name].quantity += item.quantity;
+          productSales[item.product_name].revenue += item.price * item.quantity;
+        });
+      });
+
+    const bestSellers = Object.values(productSales)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+
+    return { totalRevenue, ordersByStatus, bestSellers };
+  }, [orders]);
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
   }
@@ -263,7 +317,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-secondary/30">
       <header className="bg-card border-b sticky top-0 z-40">
         <div className="container flex h-16 items-center justify-between">
-          <h1 className="font-display text-xl font-bold">SOLE Admin</h1>
+          <h1 className="font-display text-xl font-bold">BARWAAGO Admin</h1>
           <div className="flex items-center gap-2">
             <Dialog open={passwordDialog} onOpenChange={setPasswordDialog}>
               <DialogTrigger asChild>
@@ -295,6 +349,7 @@ export default function AdminDashboard() {
       <div className="container py-6">
         <div className="flex gap-2 mb-6 flex-wrap">
           {[
+            { key: 'analytics', icon: BarChart3, label: 'Analytics' },
             { key: 'products', icon: Package, label: 'Products' },
             { key: 'orders', icon: ShoppingCart, label: 'Orders' },
             { key: 'categories', icon: Grid, label: 'Categories' },
@@ -306,80 +361,231 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-card rounded-xl border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <DollarSign className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Revenue</p>
+                    <p className="text-2xl font-bold">${analytics.totalRevenue.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card rounded-xl border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-success/10 rounded-lg">
+                    <ShoppingCart className="w-6 h-6 text-success" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Completed Orders</p>
+                    <p className="text-2xl font-bold">{analytics.ordersByStatus.completed}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card rounded-xl border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-warning/10 rounded-lg">
+                    <Package className="w-6 h-6 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pending Orders</p>
+                    <p className="text-2xl font-bold">{analytics.ordersByStatus.pending}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card rounded-xl border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-secondary rounded-lg">
+                    <TrendingUp className="w-6 h-6 text-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Orders</p>
+                    <p className="text-2xl font-bold">{orders.length}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Orders by Status */}
+            <div className="bg-card rounded-xl border p-6">
+              <h3 className="text-lg font-semibold mb-4">Orders by Status</h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {Object.entries(analytics.ordersByStatus).map(([status, count]) => (
+                  <div key={status} className="text-center p-4 bg-secondary/50 rounded-lg">
+                    <p className="text-2xl font-bold">{count}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{status}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Best Sellers */}
+            <div className="bg-card rounded-xl border p-6">
+              <h3 className="text-lg font-semibold mb-4">Best Selling Products</h3>
+              {analytics.bestSellers.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No sales data yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {analytics.bestSellers.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold text-muted-foreground">#{idx + 1}</span>
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{item.quantity} sold</p>
+                        <p className="text-sm text-muted-foreground">${item.revenue.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'products' && (
           <div className="bg-card rounded-xl border p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Products ({products.length})</h2>
-              <Dialog open={productDialog} onOpenChange={setProductDialog}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => openProductDialog()} className="gap-2"><Plus className="w-4 h-4" />Add Product</Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle>{editingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <div>
-                      <Label>Name *</Label>
-                      <Input value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} />
-                    </div>
-                    <div>
-                      <Label>Description</Label>
-                      <Textarea value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+              <h2 className="text-lg font-semibold">Products ({filteredProducts.length})</h2>
+              <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                <div className="relative flex-1 md:flex-none">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search products..." 
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="pl-9 w-full md:w-64"
+                  />
+                </div>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-full md:w-40">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Dialog open={productDialog} onOpenChange={setProductDialog}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => openProductDialog()} className="gap-2"><Plus className="w-4 h-4" />Add</Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>{editingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
                       <div>
-                        <Label>Price (USD) *</Label>
-                        <Input type="number" step="0.01" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} />
+                        <Label>Name *</Label>
+                        <Input value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} />
                       </div>
                       <div>
-                        <Label>Stock</Label>
-                        <Input type="number" value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: e.target.value })} />
+                        <Label>Description</Label>
+                        <Textarea value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} />
                       </div>
-                    </div>
-                    <div>
-                      <Label>Category</Label>
-                      <Select value={productForm.category_id} onValueChange={v => setProductForm({ ...productForm, category_id: v })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map(c => (
-                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Image</Label>
-                      <div className="flex gap-2 items-center">
-                        <Input 
-                          value={productForm.image_url} 
-                          onChange={e => setProductForm({ ...productForm, image_url: e.target.value })} 
-                          placeholder="Image URL or upload"
-                        />
-                        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-                        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                        </Button>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Price (USD) *</Label>
+                          <Input type="number" step="0.01" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Stock</Label>
+                          <Input type="number" value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: e.target.value })} />
+                        </div>
                       </div>
-                      {productForm.image_url && (
-                        <img src={productForm.image_url} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded-lg" />
-                      )}
+                      <div>
+                        <Label>Category</Label>
+                        <Select value={productForm.category_id} onValueChange={v => setProductForm({ ...productForm, category_id: v })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map(c => (
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Image</Label>
+                        <div className="flex gap-2 items-center">
+                          <Input 
+                            value={productForm.image_url} 
+                            onChange={e => setProductForm({ ...productForm, image_url: e.target.value })} 
+                            placeholder="Image URL or upload"
+                          />
+                          <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        {productForm.image_url && (
+                          <img src={productForm.image_url} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded-lg" />
+                        )}
+                      </div>
+                      {/* Sale Section */}
+                      <div className="border-t pt-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <Label className="flex items-center gap-2">
+                            <Tag className="w-4 h-4" />
+                            On Sale
+                          </Label>
+                          <Switch 
+                            checked={productForm.is_on_sale} 
+                            onCheckedChange={v => setProductForm({ ...productForm, is_on_sale: v })} 
+                          />
+                        </div>
+                        {productForm.is_on_sale && (
+                          <div>
+                            <Label>Sale Price (USD)</Label>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              value={productForm.sale_price} 
+                              onChange={e => setProductForm({ ...productForm, sale_price: e.target.value })} 
+                              placeholder="Discounted price"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <Button onClick={saveProduct} className="w-full">{editingProduct ? 'Update' : 'Create'} Product</Button>
                     </div>
-                    <Button onClick={saveProduct} className="w-full">{editingProduct ? 'Update' : 'Create'} Product</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
             <div className="divide-y">
-              {products.map(p => (
+              {filteredProducts.map(p => (
                 <div key={p.id} className="py-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {p.image_url && <img src={p.image_url} className="w-12 h-12 rounded-lg object-cover" />}
                     <div>
-                      <p className="font-medium">{p.name}</p>
-                      <p className="text-sm text-muted-foreground">${p.price} · {p.stock} in stock</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{p.name}</p>
+                        {p.is_on_sale && (
+                          <span className="px-2 py-0.5 bg-destructive/10 text-destructive text-xs rounded-full">Sale</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {p.is_on_sale && p.sale_price ? (
+                          <>
+                            <span className="text-destructive font-medium">${p.sale_price}</span>
+                            <span className="line-through ml-1">${p.price}</span>
+                          </>
+                        ) : (
+                          `$${p.price}`
+                        )}
+                        {' · '}{p.stock} in stock
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -388,6 +594,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+              {filteredProducts.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">No products found</p>
+              )}
             </div>
           </div>
         )}
@@ -399,8 +608,16 @@ export default function AdminDashboard() {
               {orders.map(o => (
                 <div key={o.id} className="py-4">
                   <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-medium">{o.customer_phone}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{o.customer_phone}</p>
+                        <button 
+                          onClick={() => setExpandedOrder(expandedOrder === o.id ? null : o.id)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          {expandedOrder === o.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      </div>
                       <p className="text-sm text-muted-foreground">Ref: {o.payment_reference || 'N/A'}</p>
                       <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</p>
                     </div>
@@ -408,7 +625,23 @@ export default function AdminDashboard() {
                       {['pending', 'paid', 'processing', 'completed', 'cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
-                  <p className="font-semibold">${o.total_amount}</p>
+                  
+                  {/* Order Items */}
+                  {expandedOrder === o.id && o.order_items && o.order_items.length > 0 && (
+                    <div className="mt-3 p-3 bg-secondary/50 rounded-lg">
+                      <p className="text-sm font-medium mb-2">Order Items:</p>
+                      <div className="space-y-2">
+                        {o.order_items.map((item: OrderItem) => (
+                          <div key={item.id} className="flex justify-between text-sm">
+                            <span>{item.product_name} × {item.quantity}</span>
+                            <span>${(item.price * item.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <p className="font-semibold mt-2">${o.total_amount}</p>
                 </div>
               ))}
             </div>
@@ -454,8 +687,8 @@ export default function AdminDashboard() {
                   placeholder="Min 6 characters"
                 />
               </div>
-              <Button onClick={createAdminUser} disabled={creatingAdmin} className="gap-2">
-                {creatingAdmin && <Loader2 className="w-4 h-4 animate-spin" />}
+              <Button onClick={createAdminUser} disabled={creatingAdmin} className="w-full">
+                {creatingAdmin ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
                 Create Admin
               </Button>
             </div>

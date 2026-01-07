@@ -16,6 +16,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   const isInStock = product.stock > 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
+  const isOnSale = product.is_on_sale && product.sale_price !== null;
+  const displayPrice = isOnSale ? product.sale_price! : product.price;
 
   return (
     <div
@@ -33,6 +35,15 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Package className="w-16 h-16 text-muted-foreground/30" />
+          </div>
+        )}
+        
+        {/* Sale badge */}
+        {isOnSale && (
+          <div className="absolute top-3 left-3">
+            <span className="px-3 py-1 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">
+              {t('sale')}
+            </span>
           </div>
         )}
         
@@ -65,9 +76,16 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         )}
         
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xl font-bold text-foreground">
-            ${product.price.toFixed(2)}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold text-foreground">
+              ${displayPrice.toFixed(2)}
+            </span>
+            {isOnSale && (
+              <span className="text-sm text-muted-foreground line-through">
+                ${product.price.toFixed(2)}
+              </span>
+            )}
+          </div>
           
           <Button
             onClick={() => addItem(product)}
