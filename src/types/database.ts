@@ -18,6 +18,8 @@ export interface Product {
   image_url: string | null;
   created_at: string;
   updated_at: string;
+  is_on_sale: boolean;
+  sale_price: number | null;
   category?: Category;
 }
 
