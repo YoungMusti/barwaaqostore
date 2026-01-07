@@ -124,7 +124,7 @@ export default function AdminDashboard() {
                       <p className="font-medium">{o.customer_phone}</p>
                       <p className="text-sm text-muted-foreground">Ref: {o.payment_reference || 'N/A'}</p>
                     </div>
-                    <select value={o.status} onChange={e => updateOrderStatus(o.id, e.target.value)} className="border rounded-lg px-3 py-1 text-sm">
+                    <select value={o.status} onChange={e => updateOrderStatus(o.id, e.target.value as Order['status'])} className="border rounded-lg px-3 py-1 text-sm">
                       {['pending', 'paid', 'processing', 'completed', 'cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
