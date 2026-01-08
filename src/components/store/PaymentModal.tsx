@@ -56,6 +56,8 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
         product_name: item.product.name,
         quantity: item.quantity,
         price: getEffectivePrice(item.product),
+        selected_size: item.selectedSize || null,
+        selected_color: item.selectedColor || null,
       }));
 
       const { error: itemsError } = await supabase

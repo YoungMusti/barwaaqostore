@@ -71,6 +71,14 @@ export function CartDrawer() {
                             <X className="w-4 h-4" />
                           </button>
                         </div>
+                        {/* Size and Color */}
+                        {(item.selectedSize || item.selectedColor) && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {item.selectedColor && <span>{item.selectedColor}</span>}
+                            {item.selectedSize && item.selectedColor && ' · '}
+                            {item.selectedSize && <span>Size {item.selectedSize}</span>}
+                          </p>
+                        )}
                         <div className="mt-1 flex items-center gap-2">
                           <span className="text-lg font-semibold">${effectivePrice.toFixed(2)}</span>
                           {isOnSale && (

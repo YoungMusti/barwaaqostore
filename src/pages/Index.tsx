@@ -3,6 +3,7 @@ import { Header } from '@/components/store/Header';
 import { HeroSection } from '@/components/store/HeroSection';
 import { CategoryFilter } from '@/components/store/CategoryFilter';
 import { ProductCard } from '@/components/store/ProductCard';
+import { ProductDetailModal } from '@/components/store/ProductDetailModal';
 import { CartDrawer } from '@/components/store/CartDrawer';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
@@ -15,6 +16,8 @@ export default function Index() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSaleOnly, setShowSaleOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showProductModal, setShowProductModal] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -98,13 +101,26 @@ export default function Index() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {filteredProducts.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                index={index} 
+                onClick={() => {
+                  setSelectedProduct(product);
+                  setShowProductModal(true);
+                }}
+              />
             ))}
           </div>
         )}
       </main>
 
       <CartDrawer />
+      <ProductDetailModal 
+        product={selectedProduct} 
+        open={showProductModal} 
+        onOpenChange={setShowProductModal} 
+      />
     </div>
   );
 }

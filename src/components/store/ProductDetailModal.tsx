@@ -1,0 +1,243 @@
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Product, ProductImage, ProductColor, ProductSize } from '@/types/database';
+import { useCart } from '@/hooks/useCart';
+import { useLanguage } from '@/hooks/useLanguage';
+import { supabase } from '@/integrations/supabase/client';
+import { ShoppingBag, ChevronLeft, ChevronRight, Package, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface ProductDetailModalProps {
+  product: Product | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function ProductDetailModal({ product, open, onOpenChange }: ProductDetailModalProps) {
+  const { addItem } = useCart();
+  const { t } = useLanguage();
+  const [images, setImages] = useState<ProductImage[]>([]);
+  const [colors, setColors] = useState<ProductColor[]>([]);
+  const [sizes, setSizes] = useState<ProductSize[]>([]);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (product && open) {
+      setIsLoading(true);
+      setSelectedImage(0);
+      setSelectedColor(null);
+      setSelectedSize(null);
+      
+      Promise.all([
+        supabase.from('product_images').select('*').eq('product_id', product.id).order('display_order'),
+        supabase.from('product_colors').select('*').eq('product_id', product.id),
+        supabase.from('product_sizes').select('*').eq('product_id', product.id).order('eu_size'),
+      ]).then(([imagesRes, colorsRes, sizesRes]) => {
+        setImages(imagesRes.data || []);
+        setColors(colorsRes.data || []);
+        setSizes(sizesRes.data || []);
+        if (colorsRes.data?.length) setSelectedColor(colorsRes.data[0].name);
+        if (sizesRes.data?.length) setSelectedSize(`${sizesRes.data[0].eu_size}/${sizesRes.data[0].us_size}`);
+        setIsLoading(false);
+      });
+    }
+  }, [product, open]);
+
+  if (!product) return null;
+
+  const isOnSale = product.is_on_sale && product.sale_price !== null;
+  const displayPrice = isOnSale ? product.sale_price! : product.price;
+  
+  // Build gallery - main image + additional images
+  const allImages = [
+    ...(product.image_url ? [{ id: 'main', image_url: product.image_url, display_order: 0 }] : []),
+    ...images.filter(img => img.image_url !== product.image_url)
+  ];
+  
+  const currentImage = allImages[selectedImage]?.image_url;
+  
+  // Check if a specific size has stock
+  const selectedSizeObj = sizes.find(s => `${s.eu_size}/${s.us_size}` === selectedSize);
+  const hasStock = sizes.length > 0 ? (selectedSizeObj?.stock || 0) > 0 : product.stock > 0;
+  const totalStock = sizes.length > 0 
+    ? sizes.reduce((sum, s) => sum + s.stock, 0) 
+    : product.stock;
+
+  const handleAddToCart = () => {
+    if (!hasStock) return;
+    addItem(product, 1, selectedSize, selectedColor);
+    onOpenChange(false);
+  };
+
+  const nextImage = () => setSelectedImage((prev) => (prev + 1) % allImages.length);
+  const prevImage = () => setSelectedImage((prev) => (prev - 1 + allImages.length) % allImages.length);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-0">
+            {/* Image Gallery */}
+            <div className="relative bg-secondary/30">
+              <div className="aspect-square relative overflow-hidden">
+                {currentImage ? (
+                  <img
+                    src={currentImage}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package className="w-20 h-20 text-muted-foreground/30" />
+                  </div>
+                )}
+                
+                {/* Sale badge */}
+                {isOnSale && (
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-destructive text-destructive-foreground">
+                      {t('sale')}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Navigation arrows */}
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 flex items-center justify-center hover:bg-background transition-colors"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 flex items-center justify-center hover:bg-background transition-colors"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
+              </div>
+              
+              {/* Thumbnail dots */}
+              {allImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                  {allImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImage(idx)}
+                      className={cn(
+                        "w-2.5 h-2.5 rounded-full transition-all",
+                        selectedImage === idx ? "bg-primary w-6" : "bg-background/60"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Product Details */}
+            <div className="p-6 flex flex-col">
+              <h2 className="font-display text-2xl font-bold mb-2">{product.name}</h2>
+              
+              {product.description && (
+                <p className="text-muted-foreground mb-4">{product.description}</p>
+              )}
+              
+              {/* Price */}
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-3xl font-bold">${displayPrice.toFixed(2)}</span>
+                {isOnSale && (
+                  <span className="text-lg text-muted-foreground line-through">${product.price.toFixed(2)}</span>
+                )}
+              </div>
+              
+              {/* Colors */}
+              {colors.length > 0 && (
+                <div className="mb-5">
+                  <h4 className="text-sm font-medium mb-2">Color: <span className="text-muted-foreground">{selectedColor}</span></h4>
+                  <div className="flex flex-wrap gap-2">
+                    {colors.map(color => (
+                      <button
+                        key={color.id}
+                        onClick={() => setSelectedColor(color.name)}
+                        className={cn(
+                          "w-10 h-10 rounded-full border-2 transition-all",
+                          selectedColor === color.name ? "border-primary ring-2 ring-primary/20" : "border-border"
+                        )}
+                        style={{ backgroundColor: color.hex_code }}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Sizes */}
+              {sizes.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium mb-2">Size (EU/US)</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {sizes.map(size => {
+                      const sizeKey = `${size.eu_size}/${size.us_size}`;
+                      const isOutOfStock = size.stock === 0;
+                      return (
+                        <button
+                          key={size.id}
+                          onClick={() => !isOutOfStock && setSelectedSize(sizeKey)}
+                          disabled={isOutOfStock}
+                          className={cn(
+                            "px-3 py-2 rounded-lg border text-sm font-medium transition-all",
+                            selectedSize === sizeKey
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : isOutOfStock
+                                ? "border-border bg-muted text-muted-foreground/50 cursor-not-allowed line-through"
+                                : "border-border hover:border-primary"
+                          )}
+                        >
+                          EU {size.eu_size} / US {size.us_size}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              {/* Stock indicator */}
+              <div className="mb-6">
+                {totalStock === 0 ? (
+                  <span className="text-destructive font-medium">{t('outOfStock')}</span>
+                ) : totalStock <= 5 ? (
+                  <span className="text-warning font-medium">{totalStock} {t('unitsLeft')}</span>
+                ) : (
+                  <span className="text-success font-medium">{t('inStock')}</span>
+                )}
+              </div>
+              
+              {/* Add to cart */}
+              <div className="mt-auto">
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={!hasStock}
+                  className="w-full h-12 text-base rounded-xl gap-2"
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  {hasStock ? t('addToCart') : t('outOfStock')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
