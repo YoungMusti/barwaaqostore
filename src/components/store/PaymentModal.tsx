@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCart } from '@/hooks/useCart';
+import { useCart, getEffectivePrice } from '@/hooks/useCart';
 import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -49,13 +49,13 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
 
       if (orderError) throw orderError;
 
-      // Create order items
+      // Create order items - use effective price (sale price if on sale)
       const orderItems = items.map(item => ({
         order_id: order.id,
         product_id: item.product.id,
         product_name: item.product.name,
         quantity: item.quantity,
-        price: item.product.price,
+        price: getEffectivePrice(item.product),
       }));
 
       const { error: itemsError } = await supabase
