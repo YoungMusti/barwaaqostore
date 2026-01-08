@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { LogOut, Package, ShoppingCart, Grid, Plus, Loader2, Pencil, Trash2, Upload, Users, Key, Search, BarChart3, ChevronDown, ChevronUp, DollarSign, TrendingUp, Tag } from 'lucide-react';
+import { LogOut, Package, ShoppingCart, Grid, Plus, Loader2, Pencil, Trash2, Upload, Users, Key, Search, BarChart3, ChevronDown, ChevronUp, DollarSign, TrendingUp, Tag, Settings2 } from 'lucide-react';
+import { ProductVariantsManager } from '@/components/admin/ProductVariantsManager';
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -30,6 +31,8 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [variantsProduct, setVariantsProduct] = useState<Product | null>(null);
+  const [showVariantsManager, setShowVariantsManager] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -589,6 +592,9 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => { setVariantsProduct(p); setShowVariantsManager(true); }} title="Manage sizes, colors, images">
+                      <Settings2 className="w-4 h-4" />
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => openProductDialog(p)}><Pencil className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="sm" onClick={() => deleteProduct(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   </div>
@@ -695,6 +701,16 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+      
+      {/* Variants Manager Modal */}
+      {variantsProduct && (
+        <ProductVariantsManager
+          product={variantsProduct}
+          open={showVariantsManager}
+          onOpenChange={setShowVariantsManager}
+          onUpdate={fetchData}
+        />
+      )}
     </div>
   );
 }

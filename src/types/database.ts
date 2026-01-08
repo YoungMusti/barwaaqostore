@@ -8,6 +8,31 @@ export interface Category {
   created_at: string;
 }
 
+export interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  display_order: number;
+  created_at: string;
+}
+
+export interface ProductColor {
+  id: string;
+  product_id: string;
+  name: string;
+  hex_code: string;
+  created_at: string;
+}
+
+export interface ProductSize {
+  id: string;
+  product_id: string;
+  eu_size: string;
+  us_size: string;
+  stock: number;
+  created_at: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -21,6 +46,9 @@ export interface Product {
   is_on_sale: boolean;
   sale_price: number | null;
   category?: Category;
+  product_images?: ProductImage[];
+  product_colors?: ProductColor[];
+  product_sizes?: ProductSize[];
 }
 
 export interface Order {
@@ -41,9 +69,13 @@ export interface OrderItem {
   product_name: string;
   quantity: number;
   price: number;
+  selected_size?: string | null;
+  selected_color?: string | null;
 }
 
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedSize?: string | null;
+  selectedColor?: string | null;
 }

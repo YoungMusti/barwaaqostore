@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (product: Product, quantity?: number) => void;
+  addItem: (product: Product, quantity?: number, selectedSize?: string | null, selectedColor?: string | null) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -40,14 +40,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const addItem = (product: Product, quantity = 1) => {
+  const addItem = (product: Product, quantity = 1, selectedSize?: string | null, selectedColor?: string | null) => {
     if (product.stock < 1) {
       toast.error('Product is out of stock');
       return;
     }
 
     setItems(prev => {
-      const existing = prev.find(item => item.product.id === product.id);
+      // For products with variants, check if exact variant exists
+      const existing = prev.find(item => 
+        item.product.id === product.id && 
+        item.selectedSize === selectedSize && 
+        item.selectedColor === selectedColor
+      );
+      
       if (existing) {
         const newQuantity = Math.min(existing.quantity + quantity, product.stock);
         if (newQuantity === existing.quantity) {
@@ -56,13 +62,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
         toast.success(`Updated quantity in cart`);
         return prev.map(item =>
-          item.product.id === product.id
-            ? { ...item, quantity: newQuantity, product } // Update product data
+          item.product.id === product.id && item.selectedSize === selectedSize && item.selectedColor === selectedColor
+            ? { ...item, quantity: newQuantity, product }
             : item
         );
       }
       toast.success('Added to cart');
-      return [...prev, { product, quantity: Math.min(quantity, product.stock) }];
+      return [...prev, { product, quantity: Math.min(quantity, product.stock), selectedSize, selectedColor }];
     });
     setIsOpen(true);
   };

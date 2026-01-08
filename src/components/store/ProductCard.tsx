@@ -1,17 +1,15 @@
 import { Product } from '@/types/database';
-import { useCart } from '@/hooks/useCart';
 import { useLanguage } from '@/hooks/useLanguage';
-import { Button } from '@/components/ui/button';
-import { ShoppingBag, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
   product: Product;
   index?: number;
+  onClick?: () => void;
 }
 
-export function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const { addItem } = useCart();
+export function ProductCard({ product, index = 0, onClick }: ProductCardProps) {
   const { t } = useLanguage();
 
   const isInStock = product.stock > 0;
@@ -21,7 +19,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   return (
     <div
-      className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/20 transition-all duration-300 hover:shadow-lg animate-slide-up"
+      onClick={onClick}
+      className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/20 transition-all duration-300 hover:shadow-lg animate-slide-up cursor-pointer"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       {/* Image */}
@@ -62,6 +61,13 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             {isInStock ? (isLowStock ? `${product.stock} ${t('unitsLeft')}` : t('inStock')) : t('outOfStock')}
           </span>
         </div>
+        
+        {/* View details overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 px-4 py-2 rounded-full text-sm font-medium">
+            View Details
+          </span>
+        </div>
       </div>
 
       {/* Content */}
@@ -86,19 +92,6 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               </span>
             )}
           </div>
-          
-          <Button
-            onClick={() => addItem(product)}
-            disabled={!isInStock}
-            size="sm"
-            className={cn(
-              "rounded-full gap-2",
-              isInStock && "bg-primary hover:bg-accent"
-            )}
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('addToCart')}</span>
-          </Button>
         </div>
       </div>
     </div>
