@@ -11,8 +11,8 @@ interface Translations {
 
 const translations: Translations = {
   // Header
-  shopName: { en: 'BARWAAGO', so: 'BARWAAGO' },
-  tagline: { en: 'Premium Footwear', so: 'Kabo Tayada Sare' },
+  shopName: { en: 'Barwaaqo Store', so: 'Barwaaqo Store' },
+  tagline: { en: '', so: '' },
   cart: { en: 'Cart', so: 'Gaariga' },
   sale: { en: 'Sale', so: 'Qiimo Jaban' },
   admin: { en: 'Admin', so: 'Maamul' },

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/store/Header';
 import { HeroSection } from '@/components/store/HeroSection';
+import { TrustSignals } from '@/components/store/TrustSignals';
 import { CategoryFilter } from '@/components/store/CategoryFilter';
 import { ProductCard } from '@/components/store/ProductCard';
 import { ProductDetailModal } from '@/components/store/ProductDetailModal';
 import { CartDrawer } from '@/components/store/CartDrawer';
+import { Footer } from '@/components/store/Footer';
+import { FloatingWhatsApp } from '@/components/store/FloatingWhatsApp';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
 import { Loader2, Package } from 'lucide-react';
@@ -72,11 +75,12 @@ export default function Index() {
   const saleCount = products.filter(p => p.is_on_sale).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <HeroSection />
+      <TrustSignals />
 
-      <main className="container py-12">
+      <main className="container py-12 flex-1">
         <div className="mb-8">
           <CategoryFilter
             categories={categories}
@@ -115,12 +119,14 @@ export default function Index() {
         )}
       </main>
 
+      <Footer />
       <CartDrawer />
       <ProductDetailModal 
         product={selectedProduct} 
         open={showProductModal} 
         onOpenChange={setShowProductModal} 
       />
+      <FloatingWhatsApp />
     </div>
   );
 }

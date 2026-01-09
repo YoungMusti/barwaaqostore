@@ -12,12 +12,9 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center">
           <span className="font-display text-2xl font-bold text-foreground tracking-tight">
-            {t('shopName')}
-          </span>
-          <span className="hidden sm:inline text-xs text-muted-foreground font-body uppercase tracking-widest">
-            {t('tagline')}
+            Barwaaqo Store
           </span>
         </Link>
 
