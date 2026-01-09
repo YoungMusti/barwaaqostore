@@ -1,0 +1,67 @@
+import { Phone, Clock, CreditCard } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
+
+export function Footer() {
+  const { language } = useLanguage();
+
+  return (
+    <footer className="bg-foreground text-background py-10 mt-12">
+      <div className="container">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Store Info */}
+          <div>
+            <h3 className="font-display text-xl font-bold mb-4">Barwaaqo Store</h3>
+            <p className="text-background/70 text-sm mb-4">
+              {language === 'so' 
+                ? 'Kabo tayada sare oo qiimo jaban ah.' 
+                : 'Premium footwear at affordable prices.'
+              }
+            </p>
+            <p className="text-xs text-background/50">
+              Powered by <span className="font-semibold">Barwaaqo Group</span>
+            </p>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              {language === 'so' ? 'Nala Soo Xiriir' : 'Contact Us'}
+            </h4>
+            <div className="space-y-2 text-sm text-background/70">
+              <p className="flex items-center gap-2">
+                <span className="font-medium text-background">
+                  {language === 'so' ? 'Telefon:' : 'Phone:'}
+                </span>
+                +252 612502108
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="font-medium text-background">WhatsApp:</span>
+                +252 612502108
+              </p>
+            </div>
+          </div>
+
+          {/* Hours & Payment */}
+          <div>
+            <h4 className="font-semibold mb-4 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              {language === 'so' ? 'Saacadaha Shaqada' : 'Business Hours'}
+            </h4>
+            <p className="text-sm text-background/70 mb-4">7:00 AM - 10:00 PM</p>
+
+            <h4 className="font-semibold mb-2 flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              {language === 'so' ? 'Qaabka Lacag Bixinta' : 'Payment Method'}
+            </h4>
+            <p className="text-sm text-background/70">EVC Plus</p>
+          </div>
+        </div>
+
+        <div className="border-t border-background/20 mt-8 pt-6 text-center text-xs text-background/50">
+          © {new Date().getFullYear()} Barwaaqo Store. {language === 'so' ? 'Xuquuqda oo dhan waa la ilaaliyey.' : 'All rights reserved.'}
+        </div>
+      </div>
+    </footer>
+  );
+}
