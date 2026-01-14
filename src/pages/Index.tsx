@@ -3,15 +3,18 @@ import { Header } from '@/components/store/Header';
 import { HeroSection } from '@/components/store/HeroSection';
 import { TrustSignals } from '@/components/store/TrustSignals';
 import { CategoryFilter } from '@/components/store/CategoryFilter';
+import { CategoryQuickLinks } from '@/components/store/CategoryQuickLinks';
 import { ProductCard } from '@/components/store/ProductCard';
 import { ProductDetailModal } from '@/components/store/ProductDetailModal';
 import { CartDrawer } from '@/components/store/CartDrawer';
 import { Footer } from '@/components/store/Footer';
 import { FloatingWhatsApp } from '@/components/store/FloatingWhatsApp';
+import { RecentlyViewedSection } from '@/components/store/RecentlyViewedSection';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
 import { Loader2, Package } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 export default function Index() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,6 +25,7 @@ export default function Index() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const { t } = useLanguage();
+  const { addItem: addToRecentlyViewed } = useRecentlyViewed();
 
   useEffect(() => {
     async function fetchData() {
@@ -66,9 +70,28 @@ export default function Index() {
     setShowSaleOnly(false);
   };
 
+  const handleHeroCategorySelect = (categorySearch: string) => {
+    // Find category by name (case insensitive partial match)
+    const cat = categories.find(c => 
+      c.name.toLowerCase().includes(categorySearch.toLowerCase())
+    );
+    if (cat) {
+      setSelectedCategory(cat.id);
+      setShowSaleOnly(false);
+      // Scroll to products section
+      document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const handleSaleSelect = () => {
     setShowSaleOnly(!showSaleOnly);
     setSelectedCategory(null);
+  };
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setShowProductModal(true);
+    addToRecentlyViewed(product);
   };
 
   // Count sale items
@@ -76,11 +99,18 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
-      <HeroSection />
+      <Header onProductClick={handleProductClick} />
+      <HeroSection onCategorySelect={handleHeroCategorySelect} />
       <TrustSignals />
+      
+      {/* Category Quick Links */}
+      <CategoryQuickLinks 
+        categories={categories}
+        onSelectCategory={handleCategorySelect}
+        categoryStockMap={categoryStockMap}
+      />
 
-      <main className="container py-12 flex-1">
+      <main id="products-section" className="container py-12 flex-1">
         <div className="mb-8">
           <CategoryFilter
             categories={categories}
@@ -109,15 +139,15 @@ export default function Index() {
                 key={product.id} 
                 product={product} 
                 index={index} 
-                onClick={() => {
-                  setSelectedProduct(product);
-                  setShowProductModal(true);
-                }}
+                onClick={() => handleProductClick(product)}
               />
             ))}
           </div>
         )}
       </main>
+
+      {/* Recently Viewed Section */}
+      <RecentlyViewedSection onProductClick={handleProductClick} />
 
       <Footer />
       <CartDrawer />

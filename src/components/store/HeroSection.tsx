@@ -2,11 +2,17 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { useEffect, useState } from 'react';
 import Autoplay from 'embla-carousel-autoplay';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 import heroMen from '@/assets/hero-men-trainers.jpg';
 import heroWomen from '@/assets/hero-women-trainers.jpg';
 import heroBoys from '@/assets/hero-boys-trainers.jpg';
 import heroGirls from '@/assets/hero-girls-trainers.jpg';
+
+interface HeroSectionProps {
+  onCategorySelect?: (categoryName: string) => void;
+}
 
 const slides = [
   {
@@ -14,32 +20,36 @@ const slides = [
     titleEn: "Men's Trainers",
     titleSo: "Kabaha Ragga",
     subtitleEn: "Step up your style with premium trainers",
-    subtitleSo: "Kabo cusub oo tayada sare leh"
+    subtitleSo: "Kabo cusub oo tayada sare leh",
+    categorySearch: "men"
   },
   {
     image: heroWomen,
     titleEn: "Women's Trainers",
     titleSo: "Kabaha Dumarka",
     subtitleEn: "Elegance meets comfort",
-    subtitleSo: "Qurux iyo raaxo isku dhafan"
+    subtitleSo: "Qurux iyo raaxo isku dhafan",
+    categorySearch: "women"
   },
   {
     image: heroBoys,
     titleEn: "Boys' Trainers",
     titleSo: "Kabaha Wiilasha",
     subtitleEn: "Built for play, styled for cool",
-    subtitleSo: "Ciyaarta iyo qaabka"
+    subtitleSo: "Ciyaarta iyo qaabka",
+    categorySearch: "boys"
   },
   {
     image: heroGirls,
     titleEn: "Girls' Trainers",
     titleSo: "Kabaha Gabdhaha",
     subtitleEn: "Fun colors, comfy fit",
-    subtitleSo: "Midab qurux badan, raaxo weyn"
+    subtitleSo: "Midab qurux badan, raaxo weyn",
+    categorySearch: "girls"
   }
 ];
 
-export function HeroSection() {
+export function HeroSection({ onCategorySelect }: HeroSectionProps) {
   const { language } = useLanguage();
   const [api, setApi] = useState<any>();
   const [current, setCurrent] = useState(0);
@@ -80,6 +90,17 @@ export function HeroSection() {
                     <p className="text-base sm:text-lg text-muted-foreground max-w-md mb-6 animate-fade-in font-body" style={{ animationDelay: '100ms' }}>
                       {language === 'so' ? slide.subtitleSo : slide.subtitleEn}
                     </p>
+                    
+                    {/* Shop Now CTA */}
+                    <Button 
+                      onClick={() => onCategorySelect?.(slide.categorySearch)}
+                      className="mb-6 animate-fade-in gap-2 rounded-full"
+                      style={{ animationDelay: '150ms' }}
+                    >
+                      {language === 'so' ? 'Soo Iibso Hadda' : 'Shop Now'}
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                    
                     <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '200ms' }}>
                       <span className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-full">
                         <span className="w-2 h-2 rounded-full bg-success"></span>
