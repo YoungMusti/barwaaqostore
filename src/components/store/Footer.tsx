@@ -1,5 +1,6 @@
 import { Phone, Clock, CreditCard } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { NewsletterSignup } from './NewsletterSignup';
 
 export function Footer() {
   const { language } = useLanguage();
@@ -20,6 +21,9 @@ export function Footer() {
             <p className="text-xs text-background/50">
               Powered by <span className="font-semibold">Barwaaqo Group</span>
             </p>
+            
+            {/* Newsletter Signup */}
+            <NewsletterSignup />
           </div>
 
           {/* Contact */}
