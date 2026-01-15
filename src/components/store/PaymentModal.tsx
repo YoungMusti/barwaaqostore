@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCart, getEffectivePrice } from '@/hooks/useCart';
+import { useCart } from '@/hooks/useCart';
 import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,61 +16,97 @@ interface PaymentModalProps {
 
 const BUSINESS_NUMBER = '612502108';
 
+// Phone validation regex: +252 followed by 8-9 digits
+const PHONE_REGEX = /^\+252[0-9]{8,9}$/;
+const MAX_REFERENCE_LENGTH = 100;
+
 export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const { items, totalAmount, clearCart } = useCart();
   const { t } = useLanguage();
   const [step, setStep] = useState<'payment' | 'confirm' | 'success'>('payment');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+252');
   const [reference, setReference] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ phone?: string; reference?: string }>({});
 
   const dialCode = `*712*${BUSINESS_NUMBER}*${Math.round(totalAmount)}#`;
 
+  const validateInputs = (): boolean => {
+    const newErrors: { phone?: string; reference?: string } = {};
+    
+    // Validate phone format
+    const trimmedPhone = phone.trim();
+    if (!trimmedPhone) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!PHONE_REGEX.test(trimmedPhone)) {
+      newErrors.phone = 'Invalid format. Use +252 followed by 8-9 digits (e.g., +252612345678)';
+    }
+    
+    // Validate reference
+    const trimmedReference = reference.trim();
+    if (!trimmedReference) {
+      newErrors.reference = 'Payment reference is required';
+    } else if (trimmedReference.length > MAX_REFERENCE_LENGTH) {
+      newErrors.reference = `Reference too long (max ${MAX_REFERENCE_LENGTH} characters)`;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async () => {
-    if (!phone.trim() || !reference.trim()) {
-      toast.error('Please fill in all fields');
+    // Client-side validation
+    if (!validateInputs()) {
+      return;
+    }
+
+    if (items.length === 0) {
+      toast.error('Your cart is empty');
       return;
     }
 
     setIsLoading(true);
     try {
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_phone: phone,
-          total_amount: totalAmount,
-          payment_reference: reference,
-          payment_method: 'EVC',
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create order items - use effective price (sale price if on sale)
+      // Prepare items for the secure function
       const orderItems = items.map(item => ({
-        order_id: order.id,
         product_id: item.product.id,
-        product_name: item.product.name,
         quantity: item.quantity,
-        price: getEffectivePrice(item.product),
         selected_size: item.selectedSize || null,
         selected_color: item.selectedColor || null,
       }));
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+      // Use secure database function that validates and calculates prices server-side
+      const { data, error } = await supabase.rpc('create_validated_order', {
+        _customer_phone: phone.trim(),
+        _payment_reference: reference.trim(),
+        _payment_method: 'EVC',
+        _items: orderItems,
+      });
 
-      if (itemsError) throw itemsError;
+      if (error) throw error;
+
+      // Check for validation errors from the function
+      if (data && data.length > 0) {
+        const result = data[0];
+        if (result.error_message) {
+          toast.error(result.error_message);
+          return;
+        }
+      }
 
       clearCart();
       setStep('success');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Order error:', error);
-      toast.error('Failed to create order. Please try again.');
+      
+      // Handle specific database constraint errors
+      if (error.message?.includes('check_phone_format')) {
+        setErrors({ phone: 'Invalid phone format. Use +252 followed by 8-9 digits' });
+      } else if (error.message?.includes('check_reference_length')) {
+        setErrors({ reference: 'Reference too long (max 100 characters)' });
+      } else {
+        toast.error('Failed to create order. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -79,8 +115,27 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const handleClose = () => {
     onOpenChange(false);
     setStep('payment');
-    setPhone('');
+    setPhone('+252');
     setReference('');
+    setErrors({});
+  };
+
+  const handlePhoneChange = (value: string) => {
+    // Ensure phone always starts with +252
+    if (!value.startsWith('+252')) {
+      value = '+252' + value.replace(/^\+?252?/, '');
+    }
+    // Only allow digits after +252
+    const cleaned = '+252' + value.slice(4).replace(/[^0-9]/g, '');
+    setPhone(cleaned.slice(0, 13)); // +252 + max 9 digits
+    if (errors.phone) setErrors(prev => ({ ...prev, phone: undefined }));
+  };
+
+  const handleReferenceChange = (value: string) => {
+    if (value.length <= MAX_REFERENCE_LENGTH) {
+      setReference(value);
+      if (errors.reference) setErrors(prev => ({ ...prev, reference: undefined }));
+    }
   };
 
   return (
@@ -127,9 +182,14 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                     type="tel"
                     placeholder="+252 61 xxx xxxx"
                     value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    className="h-12 rounded-xl"
+                    onChange={e => handlePhoneChange(e.target.value)}
+                    className={`h-12 rounded-xl ${errors.phone ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                    aria-invalid={!!errors.phone}
+                    aria-describedby={errors.phone ? 'phone-error' : undefined}
                   />
+                  {errors.phone && (
+                    <p id="phone-error" className="text-sm text-destructive">{errors.phone}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -142,9 +202,18 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                     type="text"
                     placeholder="EVC Reference / Tixraaca"
                     value={reference}
-                    onChange={e => setReference(e.target.value)}
-                    className="h-12 rounded-xl"
+                    onChange={e => handleReferenceChange(e.target.value)}
+                    className={`h-12 rounded-xl ${errors.reference ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                    maxLength={MAX_REFERENCE_LENGTH}
+                    aria-invalid={!!errors.reference}
+                    aria-describedby={errors.reference ? 'reference-error' : undefined}
                   />
+                  {errors.reference && (
+                    <p id="reference-error" className="text-sm text-destructive">{errors.reference}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground text-right">
+                    {reference.length}/{MAX_REFERENCE_LENGTH}
+                  </p>
                 </div>
               </div>
 

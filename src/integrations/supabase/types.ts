@@ -86,6 +86,30 @@ export type Database = {
           },
         ]
       }
+      order_rate_limits: {
+        Row: {
+          blocked_until: string | null
+          id: string
+          order_count: number | null
+          phone_identifier: string
+          window_start: string | null
+        }
+        Insert: {
+          blocked_until?: string | null
+          id?: string
+          order_count?: number | null
+          phone_identifier: string
+          window_start?: string | null
+        }
+        Update: {
+          blocked_until?: string | null
+          id?: string
+          order_count?: number | null
+          phone_identifier?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -306,6 +330,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_order_rate_limit: {
+        Args: { _max_orders?: number; _phone: string; _window_minutes?: number }
+        Returns: boolean
+      }
+      create_validated_order: {
+        Args: {
+          _customer_phone: string
+          _items: Json
+          _payment_method: string
+          _payment_reference: string
+        }
+        Returns: {
+          error_message: string
+          order_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
