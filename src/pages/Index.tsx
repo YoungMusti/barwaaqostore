@@ -12,9 +12,10 @@ import { FloatingWhatsApp } from '@/components/store/FloatingWhatsApp';
 import { RecentlyViewedSection } from '@/components/store/RecentlyViewedSection';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
-import { Loader2, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { ProductGridSkeleton } from '@/components/store/ProductCardSkeleton';
 
 export default function Index() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -124,9 +125,7 @@ export default function Index() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
+          <ProductGridSkeleton count={8} />
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-20">
             <Package className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />

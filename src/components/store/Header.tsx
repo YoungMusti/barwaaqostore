@@ -5,6 +5,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Link } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
+import { ThemeToggle } from './ThemeToggle';
 import { Product } from '@/types/database';
 
 interface HeaderProps {
@@ -33,6 +34,9 @@ export function Header({ onProductClick }: HeaderProps) {
 
         {/* Right actions */}
         <div className="flex items-center gap-2 md:gap-3">
+          {/* Theme toggle */}
+          <ThemeToggle />
+          
           {/* Language toggle */}
           <button
             onClick={() => setLanguage(language === 'en' ? 'so' : 'en')}
