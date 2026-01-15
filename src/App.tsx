@@ -7,6 +7,7 @@ import { CartProvider } from "@/hooks/useCart";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { WishlistProvider } from "@/hooks/useWishlist";
 import { RecentlyViewedProvider } from "@/hooks/useRecentlyViewed";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -16,26 +17,28 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <LanguageProvider>
-        <WishlistProvider>
-          <RecentlyViewedProvider>
-            <CartProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/admin" element={<AdminLogin />} />
-                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </CartProvider>
-          </RecentlyViewedProvider>
-        </WishlistProvider>
-      </LanguageProvider>
-    </TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
+      <TooltipProvider>
+        <LanguageProvider>
+          <WishlistProvider>
+            <RecentlyViewedProvider>
+              <CartProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/admin" element={<AdminLogin />} />
+                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </CartProvider>
+            </RecentlyViewedProvider>
+          </WishlistProvider>
+        </LanguageProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
