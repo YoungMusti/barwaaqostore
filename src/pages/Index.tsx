@@ -10,12 +10,15 @@ import { CartDrawer } from '@/components/store/CartDrawer';
 import { Footer } from '@/components/store/Footer';
 import { FloatingWhatsApp } from '@/components/store/FloatingWhatsApp';
 import { RecentlyViewedSection } from '@/components/store/RecentlyViewedSection';
+import { BackToTop } from '@/components/store/BackToTop';
+import { LoadingBar } from '@/components/store/LoadingBar';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
 import { Package } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { ProductGridSkeleton } from '@/components/store/ProductCardSkeleton';
+import { motion } from 'framer-motion';
 
 export default function Index() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -52,17 +55,12 @@ export default function Index() {
   }, {} as Record<string, number>);
 
   const filteredProducts = products.filter(p => {
-    // Filter by sale if selected
     if (showSaleOnly && !p.is_on_sale) return false;
-    
-    // Filter by category if selected
     if (selectedCategory) {
       return p.category_id === selectedCategory;
     }
-    
-    // If no category selected, show products from enabled categories with stock
     const cat = categories.find(c => c.id === p.category_id);
-    if (!cat) return true; // No category assigned - show it
+    if (!cat) return true;
     return cat.enabled && categoryStockMap[cat.id] > 0;
   });
 
@@ -72,14 +70,12 @@ export default function Index() {
   };
 
   const handleHeroCategorySelect = (categorySearch: string) => {
-    // Find category by name (case insensitive partial match)
     const cat = categories.find(c => 
       c.name.toLowerCase().includes(categorySearch.toLowerCase())
     );
     if (cat) {
       setSelectedCategory(cat.id);
       setShowSaleOnly(false);
-      // Scroll to products section
       document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
     }
   };
@@ -95,16 +91,28 @@ export default function Index() {
     addToRecentlyViewed(product);
   };
 
-  // Count sale items
   const saleCount = products.filter(p => p.is_on_sale).length;
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <LoadingBar isLoading={isLoading} />
       <Header onProductClick={handleProductClick} />
       <HeroSection onCategorySelect={handleHeroCategorySelect} />
       <TrustSignals />
       
-      {/* Category Quick Links */}
       <CategoryQuickLinks 
         categories={categories}
         onSelectCategory={handleCategorySelect}
@@ -127,27 +135,35 @@ export default function Index() {
         {isLoading ? (
           <ProductGridSkeleton count={8} />
         ) : filteredProducts.length === 0 ? (
-          <div className="text-center py-20">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20"
+          >
             <Package className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground">{t('allProducts')}</p>
-          </div>
+          </motion.div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+          >
             {filteredProducts.map((product, index) => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
-                index={index} 
-                onClick={() => handleProductClick(product)}
-              />
+              <motion.div key={product.id} variants={itemVariants}>
+                <ProductCard 
+                  product={product} 
+                  index={index} 
+                  onClick={() => handleProductClick(product)}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </main>
 
-      {/* Recently Viewed Section */}
       <RecentlyViewedSection onProductClick={handleProductClick} />
-
       <Footer />
       <CartDrawer />
       <ProductDetailModal 
@@ -156,6 +172,7 @@ export default function Index() {
         onOpenChange={setShowProductModal} 
       />
       <FloatingWhatsApp />
+      <BackToTop />
     </div>
   );
 }
