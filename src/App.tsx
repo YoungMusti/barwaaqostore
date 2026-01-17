@@ -9,6 +9,7 @@ import { WishlistProvider } from "@/hooks/useWishlist";
 import { RecentlyViewedProvider } from "@/hooks/useRecentlyViewed";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
+import Catalogue from "./pages/Catalogue";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
                 <BrowserRouter>
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/catalogue" element={<Catalogue />} />
                     <Route path="/admin" element={<AdminLogin />} />
                     <Route path="/admin/dashboard" element={<AdminDashboard />} />
                     <Route path="*" element={<NotFound />} />
