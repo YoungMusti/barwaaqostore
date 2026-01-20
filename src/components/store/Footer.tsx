@@ -37,21 +37,28 @@ export function Footer() {
       whileInView="visible"
       viewport={{ once: true }}
       variants={containerVariants}
-      className="bg-foreground text-background py-10 mt-12"
+      className="relative overflow-hidden py-12 mt-12"
+      style={{
+        background: 'linear-gradient(135deg, hsl(220 25% 10%) 0%, hsl(225 30% 15%) 50%, hsl(15 30% 18%) 100%)'
+      }}
     >
-      <div className="container">
+      {/* Decorative gradient orbs */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-[100px]" />
+      <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full bg-accent/10 blur-[80px]" />
+      
+      <div className="container relative">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Store Info */}
           <motion.div variants={itemVariants}>
-            <h3 className="font-display text-xl font-bold mb-4">Barwaaqo Store</h3>
-            <p className="text-background/70 text-sm mb-4">
+            <h3 className="font-display text-2xl font-bold mb-4 text-white">Barwaaqo Store</h3>
+            <p className="text-white/70 text-sm mb-4">
               {language === 'so' 
                 ? 'Kabo tayada sare oo qiimo jaban ah.' 
                 : 'Premium footwear at affordable prices.'
               }
             </p>
-            <p className="text-xs text-background/50 mb-4">
-              Powered by <span className="font-semibold">Barwaaqo Group</span>
+            <p className="text-xs text-white/50 mb-4">
+              Powered by <span className="font-semibold text-primary">Barwaaqo Group</span>
             </p>
             
             {/* Social Icons */}
@@ -63,25 +70,25 @@ export function Footer() {
 
           {/* Contact */}
           <motion.div variants={itemVariants}>
-            <h4 className="font-semibold mb-4 flex items-center gap-2">
-              <Phone className="w-4 h-4" />
+            <h4 className="font-semibold mb-4 flex items-center gap-2 text-white">
+              <Phone className="w-4 h-4 text-primary" />
               {language === 'so' ? 'Nala Soo Xiriir' : 'Contact Us'}
             </h4>
-            <div className="space-y-2 text-sm text-background/70">
+            <div className="space-y-2 text-sm text-white/70">
               <motion.p 
                 whileHover={{ x: 5 }}
-                className="flex items-center gap-2 cursor-pointer"
+                className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
               >
-                <span className="font-medium text-background">
+                <span className="font-medium text-white">
                   {language === 'so' ? 'Telefon:' : 'Phone:'}
                 </span>
                 +252 612502108
               </motion.p>
               <motion.p 
                 whileHover={{ x: 5 }}
-                className="flex items-center gap-2 cursor-pointer"
+                className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
               >
-                <span className="font-medium text-background">WhatsApp:</span>
+                <span className="font-medium text-white">WhatsApp:</span>
                 +252 612502108
               </motion.p>
             </div>
@@ -89,14 +96,14 @@ export function Footer() {
 
           {/* Hours & Payment */}
           <motion.div variants={itemVariants}>
-            <h4 className="font-semibold mb-4 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+            <h4 className="font-semibold mb-4 flex items-center gap-2 text-white">
+              <Clock className="w-4 h-4 text-accent" />
               {language === 'so' ? 'Saacadaha Shaqada' : 'Business Hours'}
             </h4>
-            <p className="text-sm text-background/70 mb-4">7:00 AM - 10:00 PM</p>
+            <p className="text-sm text-white/70 mb-4">7:00 AM - 10:00 PM</p>
 
-            <h4 className="font-semibold mb-3 flex items-center gap-2">
-              <CreditCard className="w-4 h-4" />
+            <h4 className="font-semibold mb-3 flex items-center gap-2 text-white">
+              <CreditCard className="w-4 h-4 text-success" />
               {language === 'so' ? 'Qaabka Lacag Bixinta' : 'Payment Methods'}
             </h4>
             <PaymentMethodIcons />
@@ -105,7 +112,7 @@ export function Footer() {
 
         <motion.div 
           variants={itemVariants}
-          className="border-t border-background/20 mt-8 pt-6 text-center text-xs text-background/50"
+          className="border-t border-white/10 mt-8 pt-6 text-center text-xs text-white/50"
         >
           © {new Date().getFullYear()} Barwaaqo Store. {language === 'so' ? 'Xuquuqda oo dhan waa la ilaaliyey.' : 'All rights reserved.'}
         </motion.div>

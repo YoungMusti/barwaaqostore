@@ -38,15 +38,22 @@ export function TrustSignals() {
   const { language } = useLanguage();
 
   return (
-    <section className="py-4">
+    <section className="py-6">
       <div className="container">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-primary/5 border border-border rounded-xl py-4 px-4 md:px-8"
+          className="relative overflow-hidden rounded-2xl py-5 px-4 md:px-8"
+          style={{
+            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--accent) / 0.05) 50%, hsl(200 80% 55% / 0.05) 100%)'
+          }}
         >
-          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
+          {/* Decorative gradient orbs */}
+          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-accent/10 blur-3xl" />
+          
+          <div className="relative flex flex-wrap items-center justify-center gap-4 md:gap-8">
             {signals.map((signal, index) => (
               <AnimatedTrustBadge
                 key={index}

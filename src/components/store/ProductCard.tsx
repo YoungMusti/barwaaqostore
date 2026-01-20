@@ -80,10 +80,10 @@ export function ProductCard({ product, index = 0, onClick }: ProductCardProps) {
         scale: 1.02,
         transition: { duration: 0.2 }
       }}
-      className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/20 transition-all duration-300 hover:shadow-lg cursor-pointer will-change-transform"
+      className="group bg-card rounded-2xl overflow-hidden border border-border/60 hover:border-primary/30 transition-all duration-300 hover:shadow-xl cursor-pointer will-change-transform gradient-card"
     >
       {/* Image */}
-      <div className="aspect-square relative overflow-hidden bg-secondary/50">
+      <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-secondary/80 via-muted/50 to-primary/5">
         {product.image_url ? (
           <motion.img
             src={product.image_url}

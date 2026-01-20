@@ -47,7 +47,7 @@ export function Header({ onProductClick }: HeaderProps) {
         <Link to="/" className="flex items-center flex-shrink-0 group">
           <motion.span 
             whileHover={{ scale: 1.02 }}
-            className="font-display text-xl md:text-2xl font-bold text-foreground tracking-tight"
+            className="font-display text-xl md:text-2xl font-bold tracking-tight text-gradient-warm"
           >
             Barwaaqo Store
           </motion.span>
