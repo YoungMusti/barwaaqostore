@@ -81,7 +81,11 @@ export function HeroSection({ onCategorySelect }: HeroSectionProps) {
       className="container py-6 relative"
       style={{ opacity }}
     >
-      <div className="relative rounded-2xl overflow-hidden bg-muted">
+      <div className="relative rounded-3xl overflow-hidden shadow-xl"
+        style={{
+          background: 'linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(220 20% 96%) 50%, hsl(var(--secondary)) 100%)'
+        }}
+      >
         <FloatingParticles />
         
         <Carousel
