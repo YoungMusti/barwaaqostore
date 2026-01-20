@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Heart, Menu, X, User, FileText } from 'lucide-react';
+import { ShoppingBag, Heart, Menu, X, User, FileText, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -7,6 +7,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { Link } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
 import { ThemeToggle } from './ThemeToggle';
+import { OrderLookup } from './OrderLookup';
 import { Product } from '@/types/database';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -98,6 +99,11 @@ export function Header({ onProductClick }: HeaderProps) {
             </Button>
           </motion.div>
 
+          {/* Order Lookup - Hidden on mobile */}
+          <div className="hidden md:block">
+            <OrderLookup />
+          </div>
+
           {/* Catalogue link - Hidden on mobile */}
           <Link to="/catalogue" className="hidden md:block">
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-2">
@@ -187,6 +193,9 @@ export function Header({ onProductClick }: HeaderProps) {
             className="md:hidden border-t border-border bg-background overflow-hidden"
           >
             <div className="container py-4 space-y-3">
+              <div className="p-3">
+                <OrderLookup />
+              </div>
               <Link 
                 to="/catalogue" 
                 className="flex items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors"
