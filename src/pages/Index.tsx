@@ -12,6 +12,11 @@ import { FloatingWhatsApp } from '@/components/store/FloatingWhatsApp';
 import { RecentlyViewedSection } from '@/components/store/RecentlyViewedSection';
 import { BackToTop } from '@/components/store/BackToTop';
 import { LoadingBar } from '@/components/store/LoadingBar';
+import { StickyCartBar } from '@/components/store/StickyCartBar';
+import { FAQSection } from '@/components/store/FAQSection';
+import { SocialProofPopup } from '@/components/store/SocialProofPopup';
+import { LiveChatIndicator } from '@/components/store/LiveChatIndicator';
+import { SaleCountdownBanner } from '@/components/store/SaleCountdownBanner';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
 import { Package } from 'lucide-react';
@@ -109,6 +114,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <LoadingBar isLoading={isLoading} />
+      <SaleCountdownBanner />
       <Header onProductClick={handleProductClick} />
       <HeroSection onCategorySelect={handleHeroCategorySelect} />
       <TrustSignals />
@@ -164,6 +170,7 @@ export default function Index() {
       </main>
 
       <RecentlyViewedSection onProductClick={handleProductClick} />
+      <FAQSection />
       <Footer />
       <CartDrawer />
       <ProductDetailModal 
@@ -173,6 +180,9 @@ export default function Index() {
       />
       <FloatingWhatsApp />
       <BackToTop />
+      <StickyCartBar />
+      <SocialProofPopup />
+      <LiveChatIndicator />
     </div>
   );
 }
