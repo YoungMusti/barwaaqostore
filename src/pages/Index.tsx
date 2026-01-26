@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Header } from '@/components/store/Header';
 import { HeroSection } from '@/components/store/HeroSection';
 import { TrustSignals } from '@/components/store/TrustSignals';
@@ -17,6 +17,9 @@ import { FAQSection } from '@/components/store/FAQSection';
 import { SocialProofPopup } from '@/components/store/SocialProofPopup';
 import { LiveChatIndicator } from '@/components/store/LiveChatIndicator';
 import { SaleCountdownBanner } from '@/components/store/SaleCountdownBanner';
+import { AdvancedFilters } from '@/components/store/AdvancedFilters';
+import { FeaturedCarousel } from '@/components/store/FeaturedCarousel';
+import { ProductComparisonButton, ProductComparisonModal } from '@/components/store/ProductComparison';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
 import { Package } from 'lucide-react';
@@ -33,8 +36,25 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
+  const [compareProducts, setCompareProducts] = useState<Product[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
+  
+  // Advanced filter state
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
+  const [sortBy, setSortBy] = useState('default');
+  
   const { t } = useLanguage();
   const { addItem: addToRecentlyViewed } = useRecentlyViewed();
+
+  // Calculate price bounds
+  const priceBounds = useMemo(() => {
+    if (products.length === 0) return { min: 0, max: 500 };
+    const prices = products.map(p => p.is_on_sale && p.sale_price ? p.sale_price : p.price);
+    return {
+      min: Math.floor(Math.min(...prices)),
+      max: Math.ceil(Math.max(...prices)),
+    };
+  }, [products]);
 
   useEffect(() => {
     async function fetchData() {
@@ -59,15 +79,59 @@ export default function Index() {
     return acc;
   }, {} as Record<string, number>);
 
-  const filteredProducts = products.filter(p => {
-    if (showSaleOnly && !p.is_on_sale) return false;
-    if (selectedCategory) {
-      return p.category_id === selectedCategory;
+  // Initialize price range when products load
+  useEffect(() => {
+    if (products.length > 0) {
+      setPriceRange([priceBounds.min, priceBounds.max]);
     }
-    const cat = categories.find(c => c.id === p.category_id);
-    if (!cat) return true;
-    return cat.enabled && categoryStockMap[cat.id] > 0;
-  });
+  }, [priceBounds]);
+
+  const filteredProducts = useMemo(() => {
+    let result = products.filter(p => {
+      // Sale filter
+      if (showSaleOnly && !p.is_on_sale) return false;
+      
+      // Category filter
+      if (selectedCategory) {
+        if (p.category_id !== selectedCategory) return false;
+      } else {
+        const cat = categories.find(c => c.id === p.category_id);
+        if (cat && (!cat.enabled || categoryStockMap[cat.id] === 0)) return false;
+      }
+      
+      // Price filter
+      const effectivePrice = p.is_on_sale && p.sale_price ? p.sale_price : p.price;
+      if (effectivePrice < priceRange[0] || effectivePrice > priceRange[1]) return false;
+      
+      return true;
+    });
+
+    // Sorting
+    switch (sortBy) {
+      case 'price-low':
+        result.sort((a, b) => {
+          const priceA = a.is_on_sale && a.sale_price ? a.sale_price : a.price;
+          const priceB = b.is_on_sale && b.sale_price ? b.sale_price : b.price;
+          return priceA - priceB;
+        });
+        break;
+      case 'price-high':
+        result.sort((a, b) => {
+          const priceA = a.is_on_sale && a.sale_price ? a.sale_price : a.price;
+          const priceB = b.is_on_sale && b.sale_price ? b.sale_price : b.price;
+          return priceB - priceA;
+        });
+        break;
+      case 'newest':
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      case 'name':
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+    }
+
+    return result;
+  }, [products, categories, selectedCategory, showSaleOnly, priceRange, sortBy, categoryStockMap]);
 
   const handleCategorySelect = (categoryId: string | null) => {
     setSelectedCategory(categoryId);
@@ -94,6 +158,24 @@ export default function Index() {
     setSelectedProduct(product);
     setShowProductModal(true);
     addToRecentlyViewed(product);
+  };
+
+  const toggleCompareProduct = (product: Product) => {
+    setCompareProducts(prev => {
+      const exists = prev.find(p => p.id === product.id);
+      if (exists) {
+        return prev.filter(p => p.id !== product.id);
+      }
+      if (prev.length >= 3) {
+        return prev; // Max 3 products
+      }
+      return [...prev, product];
+    });
+  };
+
+  const resetFilters = () => {
+    setPriceRange([priceBounds.min, priceBounds.max]);
+    setSortBy('default');
   };
 
   const saleCount = products.filter(p => p.is_on_sale).length;
@@ -125,8 +207,11 @@ export default function Index() {
         categoryStockMap={categoryStockMap}
       />
 
+      {/* Featured Carousel */}
+      <FeaturedCarousel products={products} onProductClick={handleProductClick} />
+
       <main id="products-section" className="container py-12 flex-1">
-        <div className="mb-8">
+        <div className="mb-6">
           <CategoryFilter
             categories={categories}
             selectedCategory={selectedCategory}
@@ -137,6 +222,17 @@ export default function Index() {
             categoryStockMap={categoryStockMap}
           />
         </div>
+
+        {/* Advanced Filters */}
+        <AdvancedFilters
+          minPrice={priceBounds.min}
+          maxPrice={priceBounds.max}
+          priceRange={priceRange}
+          onPriceChange={setPriceRange}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          onReset={resetFilters}
+        />
 
         {isLoading ? (
           <ProductGridSkeleton count={8} />
@@ -183,6 +279,15 @@ export default function Index() {
       <StickyCartBar />
       <SocialProofPopup />
       <LiveChatIndicator />
+      <ProductComparisonButton 
+        selectedCount={compareProducts.length} 
+        onClick={() => setShowComparison(true)} 
+      />
+      <ProductComparisonModal 
+        isOpen={showComparison} 
+        onClose={() => setShowComparison(false)} 
+        products={compareProducts} 
+      />
     </div>
   );
 }
