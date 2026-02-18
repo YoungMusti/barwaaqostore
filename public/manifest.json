@@ -1,0 +1,16 @@
+{
+  "name": "Barwaaqo Store",
+  "short_name": "Barwaaqo",
+  "description": "Premium footwear at affordable prices in Somalia",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f4f1",
+  "theme_color": "#e05a3a",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
