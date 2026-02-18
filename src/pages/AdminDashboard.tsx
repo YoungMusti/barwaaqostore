@@ -10,9 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { LogOut, Package, ShoppingCart, Grid, Plus, Loader2, Pencil, Trash2, Upload, Users, Key, Search, BarChart3, ChevronDown, ChevronUp, DollarSign, TrendingUp, Tag, Settings2, FileText } from 'lucide-react';
+import { LogOut, Package, ShoppingCart, Grid, Plus, Loader2, Pencil, Trash2, Upload, Users, Key, Search, BarChart3, ChevronDown, ChevronUp, DollarSign, TrendingUp, Tag, Settings2, FileText, Flame } from 'lucide-react';
 import { ProductVariantsManager } from '@/components/admin/ProductVariantsManager';
 import { CatalogueManager } from '@/components/admin/CatalogueManager';
+import { SaleBannerManager } from '@/components/admin/SaleBannerManager';
 
 interface Catalogue {
   id: string;
@@ -28,7 +29,7 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [catalogues, setCatalogues] = useState<Catalogue[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'users' | 'analytics' | 'catalogues'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'users' | 'analytics' | 'catalogues' | 'flash-sale'>('products');
   const [isLoading, setIsLoading] = useState(true);
   const [productDialog, setProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -370,6 +371,7 @@ export default function AdminDashboard() {
             { key: 'orders', icon: ShoppingCart, label: 'Orders' },
             { key: 'categories', icon: Grid, label: 'Categories' },
             { key: 'catalogues', icon: FileText, label: 'Catalogues' },
+            { key: 'flash-sale', icon: Flame, label: 'Flash Sale' },
             { key: 'users', icon: Users, label: 'Admin Users' },
           ].map(tab => (
             <Button key={tab.key} variant={activeTab === tab.key ? 'default' : 'outline'} onClick={() => setActiveTab(tab.key as any)} className="gap-2">
@@ -718,6 +720,11 @@ export default function AdminDashboard() {
         {/* Catalogues Tab */}
         {activeTab === 'catalogues' && (
           <CatalogueManager catalogues={catalogues} onRefresh={fetchData} />
+        )}
+
+        {/* Flash Sale Tab */}
+        {activeTab === 'flash-sale' && (
+          <SaleBannerManager />
         )}
       </div>
       
