@@ -337,6 +337,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sale_banners: {
+        Row: {
+          created_at: string
+          discount_text: string
+          discount_text_somali: string
+          end_time: string
+          id: string
+          is_active: boolean
+          title: string
+          title_somali: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount_text?: string
+          discount_text_somali?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          title_somali?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount_text?: string
+          discount_text_somali?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          title_somali?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
