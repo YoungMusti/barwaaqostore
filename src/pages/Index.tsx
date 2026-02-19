@@ -20,6 +20,9 @@ import { SaleCountdownBanner } from '@/components/store/SaleCountdownBanner';
 import { AdvancedFilters } from '@/components/store/AdvancedFilters';
 import { FeaturedCarousel } from '@/components/store/FeaturedCarousel';
 import { ProductComparisonButton, ProductComparisonModal } from '@/components/store/ProductComparison';
+import { StoreJsonLd } from '@/components/store/ProductJsonLd';
+import { Breadcrumbs } from '@/components/store/Breadcrumbs';
+import { WishlistShareButton } from '@/components/store/WishlistShareButton';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
 import { Package } from 'lucide-react';
@@ -27,6 +30,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { ProductGridSkeleton } from '@/components/store/ProductCardSkeleton';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 export default function Index() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -38,6 +42,7 @@ export default function Index() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [compareProducts, setCompareProducts] = useState<Product[]>([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
   
   // Advanced filter state
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
@@ -194,7 +199,8 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col pb-16 md:pb-0">
+      <StoreJsonLd />
       <LoadingBar isLoading={isLoading} />
       <SaleCountdownBanner />
       <Header onProductClick={handleProductClick} />
@@ -211,6 +217,17 @@ export default function Index() {
       <FeaturedCarousel products={products} onProductClick={handleProductClick} />
 
       <main id="products-section" className="container py-12 flex-1">
+        <Breadcrumbs items={[
+          { label: selectedCategory 
+            ? (categories.find(c => c.id === selectedCategory)?.name || 'Products')
+            : (showSaleOnly ? 'Sale' : 'All Products')
+          }
+        ]} />
+        
+        {/* Wishlist sharing */}
+        <div className="flex justify-end mb-2">
+          <WishlistShareButton />
+        </div>
         <div className="mb-6">
           <CategoryFilter
             categories={categories}
@@ -246,22 +263,38 @@ export default function Index() {
             <p className="text-muted-foreground">{t('allProducts')}</p>
           </motion.div>
         ) : (
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
-          >
-            {filteredProducts.map((product, index) => (
-              <motion.div key={product.id} variants={itemVariants}>
-                <ProductCard 
-                  product={product} 
-                  index={index} 
-                  onClick={() => handleProductClick(product)}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
+          <>
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+            >
+              {filteredProducts.slice(0, visibleCount).map((product, index) => (
+                <motion.div key={product.id} variants={itemVariants}>
+                  <ProductCard 
+                    product={product} 
+                    index={index} 
+                    onClick={() => handleProductClick(product)}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+            
+            {/* Load More */}
+            {visibleCount < filteredProducts.length && (
+              <div className="text-center mt-8">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setVisibleCount(prev => prev + 12)}
+                  className="rounded-full px-8"
+                >
+                  {t('allProducts')} ({filteredProducts.length - visibleCount} more)
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
 

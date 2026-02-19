@@ -1,9 +1,12 @@
 import { Product } from '@/types/database';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useWishlist } from '@/hooks/useWishlist';
-import { Package, Heart, AlertTriangle } from 'lucide-react';
+import { useCart } from '@/hooks/useCart';
+import { useCurrency } from './CurrencyToggle';
+import { Package, Heart, AlertTriangle, ShoppingBag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StarRating } from './ProductReviews';
+import { ProductBadge, getProductBadgeType } from './ProductBadges';
 import { motion } from 'framer-motion';
 import { useState, useRef } from 'react';
 
@@ -16,6 +19,8 @@ interface ProductCardProps {
 export function ProductCard({ product, index = 0, onClick }: ProductCardProps) {
   const { t } = useLanguage();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { addItem } = useCart();
+  const { formatPrice } = useCurrency();
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
@@ -25,9 +30,17 @@ export function ProductCard({ product, index = 0, onClick }: ProductCardProps) {
   const isOnSale = product.is_on_sale && product.sale_price !== null;
   const displayPrice = isOnSale ? product.sale_price! : product.price;
   const inWishlist = isInWishlist(product.id);
+  const badgeType = getProductBadgeType(product);
 
   // Mock rating (would come from database in production)
   const mockRating = Math.floor(Math.random() * 2) + 4; // 4 or 5 stars
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isInStock) {
+      addItem(product);
+    }
+  };
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -113,6 +126,26 @@ export function ProductCard({ product, index = 0, onClick }: ProductCardProps) {
           </motion.div>
         )}
         
+        {/* Product badges (New/Hot/Limited) */}
+        {!isOnSale && badgeType && (
+          <div className="absolute top-3 left-3">
+            <ProductBadge type={badgeType} />
+          </div>
+        )}
+        
+        {/* Quick Add to Cart button */}
+        {isInStock && (
+          <motion.button
+            onClick={handleQuickAdd}
+            initial={{ opacity: 0, y: 10 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+          >
+            <ShoppingBag className="w-4 h-4" />
+          </motion.button>
+        )}
+        
         {/* Stock urgency indicator */}
         {isLowStock && (
           <motion.div 
@@ -193,11 +226,11 @@ export function ProductCard({ product, index = 0, onClick }: ProductCardProps) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold text-foreground">
-              ${displayPrice.toFixed(2)}
+              {formatPrice(displayPrice)}
             </span>
             {isOnSale && (
               <span className="text-sm text-muted-foreground line-through">
-                ${product.price.toFixed(2)}
+                {formatPrice(product.price)}
               </span>
             )}
           </div>

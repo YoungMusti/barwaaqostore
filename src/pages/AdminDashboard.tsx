@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { LogOut, Package, ShoppingCart, Grid, Plus, Loader2, Pencil, Trash2, Upload, Users, Key, Search, BarChart3, ChevronDown, ChevronUp, DollarSign, TrendingUp, Tag, Settings2, FileText, Flame } from 'lucide-react';
+import { LogOut, Package, ShoppingCart, Grid, Plus, Loader2, Pencil, Trash2, Upload, Users, Key, Search, BarChart3, ChevronDown, ChevronUp, DollarSign, TrendingUp, Tag, Settings2, FileText, Flame, Download, AlertTriangle, MessageSquare } from 'lucide-react';
 import { ProductVariantsManager } from '@/components/admin/ProductVariantsManager';
 import { CatalogueManager } from '@/components/admin/CatalogueManager';
 import { SaleBannerManager } from '@/components/admin/SaleBannerManager';
+import { SalesCharts } from '@/components/admin/SalesCharts';
 
 interface Catalogue {
   id: string;
@@ -466,13 +467,63 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+            {/* Charts */}
+            <SalesCharts orders={orders} />
+
+            {/* Low Stock Alerts */}
+            {(() => {
+              const lowStockProducts = products.filter(p => p.stock > 0 && p.stock <= 5);
+              if (lowStockProducts.length === 0) return null;
+              return (
+                <div className="bg-card rounded-xl border border-warning/30 p-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-warning" />
+                    Low Stock Alerts ({lowStockProducts.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {lowStockProducts.map(p => (
+                      <div key={p.id} className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          {p.image_url && <img src={p.image_url} className="w-8 h-8 rounded object-cover" />}
+                          <span className="font-medium text-sm">{p.name}</span>
+                        </div>
+                        <span className="text-warning font-bold text-sm">{p.stock} left</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
         {activeTab === 'products' && (
           <div className="bg-card rounded-xl border p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-              <h2 className="text-lg font-semibold">Products ({filteredProducts.length})</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold">Products ({filteredProducts.length})</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const csvRows = ['Name,Price,Sale Price,Stock,Category,On Sale'];
+                    products.forEach(p => {
+                      const cat = categories.find(c => c.id === p.category_id);
+                      csvRows.push(`"${p.name}",${p.price},${p.sale_price || ''},${p.stock},"${cat?.name || ''}",${p.is_on_sale}`);
+                    });
+                    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `products-${new Date().toISOString().slice(0,10)}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success('Products exported!');
+                  }}
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </div>
               <div className="flex flex-wrap gap-2 w-full md:w-auto">
                 <div className="relative flex-1 md:flex-none">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -625,7 +676,31 @@ export default function AdminDashboard() {
 
         {activeTab === 'orders' && (
           <div className="bg-card rounded-xl border p-6">
-            <h2 className="text-lg font-semibold mb-4">Orders ({orders.length})</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Orders ({orders.length})</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  const csvRows = ['Phone,Amount,Status,Payment Method,Reference,Date,Notes'];
+                  orders.forEach(o => {
+                    csvRows.push(`"${o.customer_phone}",${o.total_amount},"${o.status}","${o.payment_method}","${o.payment_reference || ''}","${new Date(o.created_at).toLocaleDateString()}","${(o as any).admin_notes || ''}"`);
+                  });
+                  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `orders-${new Date().toISOString().slice(0,10)}.csv`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success('Orders exported!');
+                }}
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </Button>
+            </div>
             <div className="divide-y">
               {orders.map(o => (
                 <div key={o.id} className="py-4">
@@ -660,6 +735,26 @@ export default function AdminDashboard() {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+                  
+                  {/* Order Notes */}
+                  {expandedOrder === o.id && (
+                    <div className="mt-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MessageSquare className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">Admin Notes</span>
+                      </div>
+                      <Textarea
+                        placeholder="Add internal notes about this order..."
+                        defaultValue={(o as any).admin_notes || ''}
+                        className="text-sm h-16"
+                        onBlur={async (e) => {
+                          const notes = e.target.value;
+                          await supabase.from('orders').update({ admin_notes: notes } as any).eq('id', o.id);
+                          toast.success('Note saved');
+                        }}
+                      />
                     </div>
                   )}
                   
