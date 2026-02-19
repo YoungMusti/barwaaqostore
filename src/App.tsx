@@ -8,6 +8,8 @@ import { LanguageProvider } from "@/hooks/useLanguage";
 import { WishlistProvider } from "@/hooks/useWishlist";
 import { RecentlyViewedProvider } from "@/hooks/useRecentlyViewed";
 import { ThemeProvider } from "next-themes";
+import { CurrencyProvider } from "@/components/store/CurrencyToggle";
+import { MobileBottomNav } from "@/components/store/MobileBottomNav";
 import { AnimatePresence, motion } from 'framer-motion';
 import Index from "./pages/Index";
 import Catalogue from "./pages/Catalogue";
@@ -60,17 +62,20 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
       <TooltipProvider>
         <LanguageProvider>
-          <WishlistProvider>
-            <RecentlyViewedProvider>
-              <CartProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <AnimatedRoutes />
-                </BrowserRouter>
-              </CartProvider>
-            </RecentlyViewedProvider>
-          </WishlistProvider>
+          <CurrencyProvider>
+            <WishlistProvider>
+              <RecentlyViewedProvider>
+                <CartProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <AnimatedRoutes />
+                    <MobileBottomNav />
+                  </BrowserRouter>
+                </CartProvider>
+              </RecentlyViewedProvider>
+            </WishlistProvider>
+          </CurrencyProvider>
         </LanguageProvider>
       </TooltipProvider>
     </ThemeProvider>

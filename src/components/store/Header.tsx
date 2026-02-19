@@ -7,6 +7,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { Link } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
 import { ThemeToggle } from './ThemeToggle';
+import { CurrencyToggle } from './CurrencyToggle';
 import { OrderLookup } from './OrderLookup';
 import { Product } from '@/types/database';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -62,6 +63,9 @@ export function Header({ onProductClick }: HeaderProps) {
         <div className="flex items-center gap-2 md:gap-3">
           {/* Theme toggle */}
           <ThemeToggle />
+          
+          {/* Currency toggle */}
+          <CurrencyToggle />
           
           {/* Language toggle */}
           <motion.button

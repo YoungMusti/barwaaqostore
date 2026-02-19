@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types/database';
 import { useLanguage } from '@/hooks/useLanguage';
+import { VoiceSearch } from './VoiceSearch';
 
 interface SearchBarProps {
   onProductClick: (product: Product) => void;
@@ -76,11 +77,17 @@ export function SearchBar({ onProductClick }: SearchBarProps) {
               setQuery('');
               setResults([]);
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
+            className="absolute right-8 top-1/2 -translate-y-1/2"
           >
             <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
           </button>
         )}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          <VoiceSearch onResult={(text) => {
+            setQuery(text);
+            setIsOpen(true);
+          }} />
+        </div>
       </div>
 
       {isOpen && query.length >= 2 && (

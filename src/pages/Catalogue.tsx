@@ -71,7 +71,7 @@ export default function Catalogue() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col pb-16 md:pb-0">
       <Header />
       
       <main className="flex-1 container py-8">

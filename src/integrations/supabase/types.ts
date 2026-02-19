@@ -142,6 +142,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          admin_notes: string | null
           created_at: string
           customer_phone: string
           id: string
@@ -151,6 +152,7 @@ export type Database = {
           total_amount: number
         }
         Insert: {
+          admin_notes?: string | null
           created_at?: string
           customer_phone: string
           id?: string
@@ -160,6 +162,7 @@ export type Database = {
           total_amount: number
         }
         Update: {
+          admin_notes?: string | null
           created_at?: string
           customer_phone?: string
           id?: string
@@ -277,6 +280,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_on_sale: boolean
+          low_stock_threshold: number
           name: string
           price: number
           sale_price: number | null
@@ -290,6 +294,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_on_sale?: boolean
+          low_stock_threshold?: number
           name: string
           price: number
           sale_price?: number | null
@@ -303,6 +308,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_on_sale?: boolean
+          low_stock_threshold?: number
           name?: string
           price?: number
           sale_price?: number | null
