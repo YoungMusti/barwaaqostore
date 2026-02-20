@@ -63,7 +63,7 @@ export function SaleCountdownBanner() {
       exit={{ height: 0, opacity: 0 }}
       className="relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, hsl(350 80% 55%) 0%, hsl(15 85% 55%) 50%, hsl(35 90% 55%) 100%)'
+        background: 'linear-gradient(135deg, hsl(230 55% 25%) 0%, hsl(270 60% 40%) 50%, hsl(230 50% 35%) 100%)'
       }}
     >
       <div className="container py-2 flex items-center justify-center gap-4 text-sm">

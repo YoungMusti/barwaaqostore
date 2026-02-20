@@ -4,6 +4,7 @@ import { NewsletterSignup } from './NewsletterSignup';
 import { AnimatedSocialIcons } from './AnimatedSocialIcons';
 import { PaymentMethodIcons } from './PaymentMethodIcons';
 import { motion } from 'framer-motion';
+import barwaaqoLogo from '@/assets/barwaaqo-logo.png';
 
 export function Footer() {
   const { language } = useLanguage();
@@ -50,7 +51,10 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Store Info */}
           <motion.div variants={itemVariants}>
-            <h3 className="font-display text-2xl font-bold mb-4 text-white">Barwaaqo Store</h3>
+            <div className="flex items-center gap-3 mb-4">
+              <img src={barwaaqoLogo} alt="Barwaaqo Store" className="h-10 w-10 object-contain rounded-lg bg-white/10 p-1" />
+              <h3 className="font-display text-2xl font-bold text-white">Barwaaqo Store</h3>
+            </div>
             <p className="text-white/70 text-sm mb-4">
               {language === 'so' 
                 ? 'Kabo tayada sare oo qiimo jaban ah.' 

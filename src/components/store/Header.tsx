@@ -12,6 +12,7 @@ import { OrderLookup } from './OrderLookup';
 import { Product } from '@/types/database';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import barwaaqoLogo from '@/assets/barwaaqo-logo.png';
 
 interface HeaderProps {
   onProductClick?: (product: Product) => void;
@@ -45,12 +46,13 @@ export function Header({ onProductClick }: HeaderProps) {
     >
       <div className="container flex h-16 items-center justify-between gap-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center flex-shrink-0 group">
+        <Link to="/" className="flex items-center gap-2 flex-shrink-0 group">
+          <img src={barwaaqoLogo} alt="Barwaaqo Store" className="h-9 w-9 object-contain" />
           <motion.span 
             whileHover={{ scale: 1.02 }}
-            className="font-display text-xl md:text-2xl font-bold tracking-tight text-gradient-warm"
+            className="font-display text-lg md:text-xl font-bold tracking-tight text-gradient-warm hidden sm:inline"
           >
-            Barwaaqo Store
+            Barwaaqo
           </motion.span>
         </Link>
 
