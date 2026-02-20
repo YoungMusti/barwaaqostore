@@ -5,6 +5,7 @@ import { TrustSignals } from '@/components/store/TrustSignals';
 import { CategoryFilter } from '@/components/store/CategoryFilter';
 import { CategoryQuickLinks } from '@/components/store/CategoryQuickLinks';
 import { ProductCard } from '@/components/store/ProductCard';
+import { ProductListCard } from '@/components/store/ProductListCard';
 import { ProductDetailModal } from '@/components/store/ProductDetailModal';
 import { CartDrawer } from '@/components/store/CartDrawer';
 import { Footer } from '@/components/store/Footer';
@@ -23,6 +24,15 @@ import { ProductComparisonButton, ProductComparisonModal } from '@/components/st
 import { StoreJsonLd } from '@/components/store/ProductJsonLd';
 import { Breadcrumbs } from '@/components/store/Breadcrumbs';
 import { WishlistShareButton } from '@/components/store/WishlistShareButton';
+import { AnnouncementBar } from '@/components/store/AnnouncementBar';
+import { StoreStats } from '@/components/store/StoreStats';
+import { TestimonialsSection } from '@/components/store/TestimonialsSection';
+import { PromoBanner } from '@/components/store/PromoBanner';
+import { DeliveryInfo } from '@/components/store/DeliveryInfo';
+import { ScrollProgress } from '@/components/store/ScrollProgress';
+import { ProductGridToggle } from '@/components/store/ProductGridToggle';
+import { KeyboardShortcuts } from '@/components/store/KeyboardShortcuts';
+import { WelcomeToast } from '@/components/store/WelcomeToast';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
 import { Package } from 'lucide-react';
@@ -43,6 +53,7 @@ export default function Index() {
   const [compareProducts, setCompareProducts] = useState<Product[]>([]);
   const [showComparison, setShowComparison] = useState(false);
   const [visibleCount, setVisibleCount] = useState(12);
+  const [gridView, setGridView] = useState<'grid' | 'list'>('grid');
   
   // Advanced filter state
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
@@ -93,25 +104,18 @@ export default function Index() {
 
   const filteredProducts = useMemo(() => {
     let result = products.filter(p => {
-      // Sale filter
       if (showSaleOnly && !p.is_on_sale) return false;
-      
-      // Category filter
       if (selectedCategory) {
         if (p.category_id !== selectedCategory) return false;
       } else {
         const cat = categories.find(c => c.id === p.category_id);
         if (cat && (!cat.enabled || categoryStockMap[cat.id] === 0)) return false;
       }
-      
-      // Price filter
       const effectivePrice = p.is_on_sale && p.sale_price ? p.sale_price : p.price;
       if (effectivePrice < priceRange[0] || effectivePrice > priceRange[1]) return false;
-      
       return true;
     });
 
-    // Sorting
     switch (sortBy) {
       case 'price-low':
         result.sort((a, b) => {
@@ -168,12 +172,8 @@ export default function Index() {
   const toggleCompareProduct = (product: Product) => {
     setCompareProducts(prev => {
       const exists = prev.find(p => p.id === product.id);
-      if (exists) {
-        return prev.filter(p => p.id !== product.id);
-      }
-      if (prev.length >= 3) {
-        return prev; // Max 3 products
-      }
+      if (exists) return prev.filter(p => p.id !== product.id);
+      if (prev.length >= 3) return prev;
       return [...prev, product];
     });
   };
@@ -187,10 +187,7 @@ export default function Index() {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.05 }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
   };
 
   const itemVariants = {
@@ -201,7 +198,11 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background flex flex-col pb-16 md:pb-0">
       <StoreJsonLd />
+      <ScrollProgress />
+      <KeyboardShortcuts />
+      <WelcomeToast />
       <LoadingBar isLoading={isLoading} />
+      <AnnouncementBar />
       <SaleCountdownBanner />
       <Header onProductClick={handleProductClick} />
       <HeroSection onCategorySelect={handleHeroCategorySelect} />
@@ -213,8 +214,10 @@ export default function Index() {
         categoryStockMap={categoryStockMap}
       />
 
-      {/* Featured Carousel */}
       <FeaturedCarousel products={products} onProductClick={handleProductClick} />
+
+      {/* Promo Banner */}
+      <PromoBanner onShopSale={handleSaleSelect} />
 
       <main id="products-section" className="container py-12 flex-1">
         <Breadcrumbs items={[
@@ -224,7 +227,6 @@ export default function Index() {
           }
         ]} />
         
-        {/* Wishlist sharing */}
         <div className="flex justify-end mb-2">
           <WishlistShareButton />
         </div>
@@ -240,7 +242,6 @@ export default function Index() {
           />
         </div>
 
-        {/* Advanced Filters */}
         <AdvancedFilters
           minPrice={priceBounds.min}
           maxPrice={priceBounds.max}
@@ -259,29 +260,62 @@ export default function Index() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20"
           >
-            <Package className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground">{t('allProducts')}</p>
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+              <Package className="w-10 h-10 text-muted-foreground/40" />
+            </div>
+            <h3 className="font-display text-xl font-semibold mb-2 text-foreground">
+              {t('allProducts')}
+            </h3>
+            <p className="text-muted-foreground text-sm mb-4">
+              Try adjusting your filters or browse all categories
+            </p>
+            <Button variant="outline" onClick={resetFilters} className="rounded-full">
+              Reset Filters
+            </Button>
           </motion.div>
         ) : (
           <>
-            <motion.div 
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
-            >
-              {filteredProducts.slice(0, visibleCount).map((product, index) => (
-                <motion.div key={product.id} variants={itemVariants}>
-                  <ProductCard 
-                    product={product} 
-                    index={index} 
-                    onClick={() => handleProductClick(product)}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
+            <ProductGridToggle 
+              view={gridView} 
+              onViewChange={setGridView} 
+              count={filteredProducts.length} 
+            />
+
+            {gridView === 'grid' ? (
+              <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+              >
+                {filteredProducts.slice(0, visibleCount).map((product, index) => (
+                  <motion.div key={product.id} variants={itemVariants}>
+                    <ProductCard 
+                      product={product} 
+                      index={index} 
+                      onClick={() => handleProductClick(product)}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="flex flex-col gap-3"
+              >
+                {filteredProducts.slice(0, visibleCount).map((product) => (
+                  <motion.div key={product.id} variants={itemVariants}>
+                    <ProductListCard 
+                      product={product}
+                      onClick={() => handleProductClick(product)}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
             
-            {/* Load More */}
             {visibleCount < filteredProducts.length && (
               <div className="text-center mt-8">
                 <Button
@@ -297,6 +331,15 @@ export default function Index() {
           </>
         )}
       </main>
+
+      {/* Store Stats */}
+      <StoreStats />
+
+      {/* Testimonials */}
+      <TestimonialsSection />
+
+      {/* Delivery Info */}
+      <DeliveryInfo />
 
       <RecentlyViewedSection onProductClick={handleProductClick} />
       <FAQSection />

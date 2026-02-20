@@ -112,16 +112,19 @@ export function ProductCard({ product, index = 0, onClick }: ProductCardProps) {
           </div>
         )}
         
-        {/* Sale badge */}
+        {/* Sale badge with discount % */}
         {isOnSale && (
           <motion.div 
-            className="absolute top-3 left-3"
+            className="absolute top-3 left-3 flex gap-1.5"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 25 }}
           >
             <span className="px-3 py-1 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">
               {t('sale')}
+            </span>
+            <span className="px-2 py-1 rounded-full text-xs font-bold bg-foreground text-background">
+              -{Math.round(((product.price - product.sale_price!) / product.price) * 100)}%
             </span>
           </motion.div>
         )}

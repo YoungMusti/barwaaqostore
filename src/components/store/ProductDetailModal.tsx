@@ -5,11 +5,13 @@ import { Product, ProductImage, ProductColor, ProductSize } from '@/types/databa
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useCurrency } from './CurrencyToggle';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingBag, ChevronLeft, ChevronRight, Package, Loader2, Heart, Ruler } from 'lucide-react';
+import { ShoppingBag, ChevronLeft, ChevronRight, Package, Loader2, Heart, Ruler, Share2, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SizeGuideModal } from './SizeGuideModal';
 import { ProductReviews } from './ProductReviews';
+import { toast } from 'sonner';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -21,6 +23,7 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
   const { addItem } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { t, language } = useLanguage();
+  const { formatPrice } = useCurrency();
   const [images, setImages] = useState<ProductImage[]>([]);
   const [colors, setColors] = useState<ProductColor[]>([]);
   const [sizes, setSizes] = useState<ProductSize[]>([]);
@@ -29,6 +32,7 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (product && open) {
@@ -174,10 +178,15 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
                 )}
                 
                 {/* Price */}
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="text-3xl font-bold">${displayPrice.toFixed(2)}</span>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-3xl font-bold">{formatPrice(displayPrice)}</span>
                   {isOnSale && (
-                    <span className="text-lg text-muted-foreground line-through">${product.price.toFixed(2)}</span>
+                    <>
+                      <span className="text-lg text-muted-foreground line-through">{formatPrice(product.price)}</span>
+                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-destructive text-destructive-foreground">
+                        -{Math.round(((product.price - product.sale_price!) / product.price) * 100)}%
+                      </span>
+                    </>
                   )}
                 </div>
                 
@@ -269,6 +278,20 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
                     onClick={() => toggleWishlist(product)}
                   >
                     <Heart className={cn("w-5 h-5", inWishlist && "fill-current text-destructive")} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-12 w-12 rounded-xl"
+                    onClick={() => {
+                      const url = window.location.origin + '/?product=' + product.id;
+                      navigator.clipboard.writeText(`${product.name} - ${formatPrice(displayPrice)} ${url}`);
+                      setCopied(true);
+                      toast.success(language === 'so' ? 'La koobiyey!' : 'Link copied!');
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                  >
+                    {copied ? <Check className="w-5 h-5 text-success" /> : <Share2 className="w-5 h-5" />}
                   </Button>
                 </div>
                 
