@@ -33,6 +33,7 @@ import { ScrollProgress } from '@/components/store/ScrollProgress';
 import { ProductGridToggle } from '@/components/store/ProductGridToggle';
 import { KeyboardShortcuts } from '@/components/store/KeyboardShortcuts';
 import { WelcomeToast } from '@/components/store/WelcomeToast';
+import { NewArrivalsShowcase } from '@/components/store/NewArrivalsShowcase';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
 import { Package } from 'lucide-react';
@@ -207,6 +208,9 @@ export default function Index() {
       <Header onProductClick={handleProductClick} />
       <HeroSection onCategorySelect={handleHeroCategorySelect} />
       <TrustSignals />
+      
+      {/* New Arrivals Showcase */}
+      <NewArrivalsShowcase />
       
       <CategoryQuickLinks 
         categories={categories}
