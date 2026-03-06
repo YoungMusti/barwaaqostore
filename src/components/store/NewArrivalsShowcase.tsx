@@ -23,6 +23,16 @@ import shoeKhakiSlip from '@/assets/shoes/shoe-khaki-slip.jpg';
 import shoeBlackYellowSlip from '@/assets/shoes/shoe-black-yellow-slip.jpg';
 import shoeBlackRedKnit from '@/assets/shoes/shoe-black-red-knit.jpg';
 import shoeDarkStripe from '@/assets/shoes/shoe-dark-stripe.jpg';
+import shoeWhiteNavyTan from '@/assets/shoes/shoe-white-navy-tan.jpg';
+import shoeSpottedYellow from '@/assets/shoes/shoe-spotted-yellow.jpg';
+import shoeRedBlueAir from '@/assets/shoes/shoe-red-blue-air.jpg';
+import shoeWhiteWing from '@/assets/shoes/shoe-white-wing.jpg';
+import shoeTanGreen from '@/assets/shoes/shoe-tan-green.jpg';
+import shoeWhiteStripe from '@/assets/shoes/shoe-white-stripe.jpg';
+import shoeGreyCloud from '@/assets/shoes/shoe-grey-cloud.jpg';
+import shoeTealRainbow from '@/assets/shoes/shoe-teal-rainbow.jpg';
+import shoeOrangeChunky from '@/assets/shoes/shoe-orange-chunky.jpg';
+import shoeBlackGer from '@/assets/shoes/shoe-black-ger.jpg';
 
 const showcaseItems = [
   { image: shoeWhiteGrey, name: 'Urban Classic', tag: 'Casual' },
@@ -45,6 +55,16 @@ const showcaseItems = [
   { image: shoeBlackYellowSlip, name: 'Stealth', tag: 'Slip-On' },
   { image: shoeBlackRedKnit, name: 'Phantom', tag: 'Premium' },
   { image: shoeDarkStripe, name: 'Power Step', tag: 'Athletic' },
+  { image: shoeWhiteNavyTan, name: 'Harbor', tag: 'Casual' },
+  { image: shoeSpottedYellow, name: 'Cheetah', tag: 'Sport' },
+  { image: shoeRedBlueAir, name: 'Patriot Air', tag: 'Running' },
+  { image: shoeWhiteWing, name: 'Angel Wing', tag: 'Premium' },
+  { image: shoeTanGreen, name: 'Eco Boost', tag: 'Running' },
+  { image: shoeWhiteStripe, name: 'Court Pro', tag: 'Casual' },
+  { image: shoeGreyCloud, name: 'Cloud Walk', tag: 'Comfort' },
+  { image: shoeTealRainbow, name: 'Prism', tag: 'Kids' },
+  { image: shoeOrangeChunky, name: 'Blaze Max', tag: 'Sport' },
+  { image: shoeBlackGer, name: 'Titan', tag: 'Athletic' },
 ];
 
 export function NewArrivalsShowcase() {
