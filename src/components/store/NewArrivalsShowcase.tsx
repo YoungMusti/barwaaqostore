@@ -111,6 +111,12 @@ const showcaseItems = [
   { image: shoeWhiteDarkWave, name: 'Contrast', tag: 'Casual' },
   { image: shoeCreamTanNavy, name: 'Heritage', tag: 'Premium' },
   { image: shoeWhiteNavyVip, name: 'VIP Elite', tag: 'Premium' },
+  { image: shoeWhiteGreyKnitFashion, name: 'Aero Knit', tag: 'Comfort' },
+  { image: shoeGreyRedChunky, name: 'Reactor', tag: 'Kids' },
+  { image: shoeBlackRedWave, name: 'Go Flash', tag: 'Sport' },
+  { image: shoePurpleTeal, name: 'Galaxy', tag: 'Kids' },
+  { image: shoeWhiteTealRun, name: 'Phantom Run', tag: 'Running' },
+  { image: shoeAllBlackAir, name: 'Stealth Max', tag: 'Athletic' },
 ];
 
 export function NewArrivalsShowcase() {
