@@ -43,6 +43,16 @@ import shoeWhiteGreenStripe from '@/assets/shoes/shoe-white-green-stripe.jpg';
 import shoePurpleGrey from '@/assets/shoes/shoe-purple-grey.jpg';
 import shoeBlackWhiteRetro from '@/assets/shoes/shoe-black-white-retro.jpg';
 import shoeWhiteGreen30 from '@/assets/shoes/shoe-white-green-30.jpg';
+import shoeWhiteSkyRun from '@/assets/shoes/shoe-white-sky-run.jpg';
+import shoeWhiteHighBars from '@/assets/shoes/shoe-white-high-bars.jpg';
+import shoeBlackPinkFlame from '@/assets/shoes/shoe-black-pink-flame.jpg';
+import shoeDarkGreenStripe from '@/assets/shoes/shoe-dark-green-stripe.jpg';
+import shoeWhiteBlueKnit from '@/assets/shoes/shoe-white-blue-knit.jpg';
+import shoeBlackFashionGl from '@/assets/shoes/shoe-black-fashion-gl.jpg';
+import shoeAllWhite from '@/assets/shoes/shoe-all-white.jpg';
+import shoeWhiteDarkWave from '@/assets/shoes/shoe-white-dark-wave.jpg';
+import shoeCreamTanNavy from '@/assets/shoes/shoe-cream-tan-navy.jpg';
+import shoeWhiteNavyVip from '@/assets/shoes/shoe-white-navy-vip.jpg';
 
 const showcaseItems = [
   { image: shoeWhiteGrey, name: 'Urban Classic', tag: 'Casual' },
