@@ -152,18 +152,20 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
                   )}
                 </div>
                 
-                {/* Thumbnail dots */}
+                {/* Thumbnail strip */}
                 {allImages.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                    {allImages.map((_, idx) => (
+                  <div className="flex gap-2 p-3 overflow-x-auto">
+                    {allImages.map((img, idx) => (
                       <button
                         key={idx}
                         onClick={() => setSelectedImage(idx)}
                         className={cn(
-                          "w-2.5 h-2.5 rounded-full transition-all",
-                          selectedImage === idx ? "bg-primary w-6" : "bg-background/60"
+                          "w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all",
+                          selectedImage === idx ? "border-primary ring-2 ring-primary/20" : "border-transparent opacity-60 hover:opacity-100"
                         )}
-                      />
+                      >
+                        <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                      </button>
                     ))}
                   </div>
                 )}
