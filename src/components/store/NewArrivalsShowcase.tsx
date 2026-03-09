@@ -1,127 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { supabase } from '@/integrations/supabase/client';
 
-import shoeWhiteGrey from '@/assets/shoes/shoe-white-grey.jpg';
-import shoeBlackOrange from '@/assets/shoes/shoe-black-orange.jpg';
-import shoeBeigeKnit from '@/assets/shoes/shoe-beige-knit.jpg';
-import shoeBlackSport from '@/assets/shoes/shoe-black-sport.jpg';
-import shoePurpleOrange from '@/assets/shoes/shoe-purple-orange.jpg';
-import shoeWhiteBlue from '@/assets/shoes/shoe-white-blue.jpg';
-import shoeColorfulKids from '@/assets/shoes/shoe-colorful-kids.jpg';
-import shoeWhiteGreen from '@/assets/shoes/shoe-white-green.jpg';
-import shoeBlackGold from '@/assets/shoes/shoe-black-gold.jpg';
-import shoeWhiteTeal from '@/assets/shoes/shoe-white-teal.jpg';
-import shoeGreyKnit from '@/assets/shoes/shoe-grey-knit.jpg';
-import shoeWhiteNeon from '@/assets/shoes/shoe-white-neon.jpg';
-import shoeOliveAir from '@/assets/shoes/shoe-olive-air.jpg';
-import shoeGreyBlade from '@/assets/shoes/shoe-grey-blade.jpg';
-import shoeBlackRed from '@/assets/shoes/shoe-black-red.jpg';
-import shoeBrownSlip from '@/assets/shoes/shoe-brown-slip.jpg';
-import shoeKhakiSlip from '@/assets/shoes/shoe-khaki-slip.jpg';
-import shoeBlackYellowSlip from '@/assets/shoes/shoe-black-yellow-slip.jpg';
-import shoeBlackRedKnit from '@/assets/shoes/shoe-black-red-knit.jpg';
-import shoeDarkStripe from '@/assets/shoes/shoe-dark-stripe.jpg';
-import shoeWhiteNavyTan from '@/assets/shoes/shoe-white-navy-tan.jpg';
-import shoeSpottedYellow from '@/assets/shoes/shoe-spotted-yellow.jpg';
-import shoeRedBlueAir from '@/assets/shoes/shoe-red-blue-air.jpg';
-import shoeWhiteWing from '@/assets/shoes/shoe-white-wing.jpg';
-import shoeTanGreen from '@/assets/shoes/shoe-tan-green.jpg';
-import shoeWhiteStripe from '@/assets/shoes/shoe-white-stripe.jpg';
-import shoeGreyCloud from '@/assets/shoes/shoe-grey-cloud.jpg';
-import shoeTealRainbow from '@/assets/shoes/shoe-teal-rainbow.jpg';
-import shoeOrangeChunky from '@/assets/shoes/shoe-orange-chunky.jpg';
-import shoeBlackGer from '@/assets/shoes/shoe-black-ger.jpg';
-import shoeWhiteOrangeChunky from '@/assets/shoes/shoe-white-orange-chunky.jpg';
-import shoeGreyYellow from '@/assets/shoes/shoe-grey-yellow.jpg';
-import shoeNavyWave from '@/assets/shoes/shoe-navy-wave.jpg';
-import shoeWhiteBlueGradient from '@/assets/shoes/shoe-white-blue-gradient.jpg';
-import shoeBlackBlue700 from '@/assets/shoes/shoe-black-blue-700.jpg';
-import shoeGreyFashion from '@/assets/shoes/shoe-grey-fashion.jpg';
-import shoeWhiteGreenStripe from '@/assets/shoes/shoe-white-green-stripe.jpg';
-import shoePurpleGrey from '@/assets/shoes/shoe-purple-grey.jpg';
-import shoeBlackWhiteRetro from '@/assets/shoes/shoe-black-white-retro.jpg';
-import shoeWhiteGreen30 from '@/assets/shoes/shoe-white-green-30.jpg';
-import shoeWhiteSkyRun from '@/assets/shoes/shoe-white-sky-run.jpg';
-import shoeWhiteHighBars from '@/assets/shoes/shoe-white-high-bars.jpg';
-import shoeBlackPinkFlame from '@/assets/shoes/shoe-black-pink-flame.jpg';
-import shoeDarkGreenStripe from '@/assets/shoes/shoe-dark-green-stripe.jpg';
-import shoeWhiteBlueKnit from '@/assets/shoes/shoe-white-blue-knit.jpg';
-import shoeBlackFashionGl from '@/assets/shoes/shoe-black-fashion-gl.jpg';
-import shoeAllWhite from '@/assets/shoes/shoe-all-white.jpg';
-import shoeWhiteDarkWave from '@/assets/shoes/shoe-white-dark-wave.jpg';
-import shoeCreamTanNavy from '@/assets/shoes/shoe-cream-tan-navy.jpg';
-import shoeWhiteNavyVip from '@/assets/shoes/shoe-white-navy-vip.jpg';
-import shoeWhiteGreyKnitFashion from '@/assets/shoes/shoe-white-grey-knit-fashion.jpg';
-import shoeGreyRedChunky from '@/assets/shoes/shoe-grey-red-chunky.jpg';
-import shoeBlackRedWave from '@/assets/shoes/shoe-black-red-wave.jpg';
-import shoePurpleTeal from '@/assets/shoes/shoe-purple-teal.jpg';
-import shoeWhiteTealRun from '@/assets/shoes/shoe-white-teal-run.jpg';
-import shoeAllBlackAir from '@/assets/shoes/shoe-all-black-air.jpg';
-
-const showcaseItems = [
-  { image: shoeWhiteGrey, name: 'Urban Classic', tag: 'Casual' },
-  { image: shoeBlackOrange, name: 'Night Runner', tag: 'Sport' },
-  { image: shoeBeigeKnit, name: 'Breeze Knit', tag: 'Comfort' },
-  { image: shoeBlackSport, name: 'Shadow Strike', tag: 'Athletic' },
-  { image: shoePurpleOrange, name: 'Trail Blaze', tag: 'Outdoor' },
-  { image: shoeWhiteBlue, name: 'Ocean Wave', tag: 'Running' },
-  { image: shoeColorfulKids, name: 'Color Pop', tag: 'Kids' },
-  { image: shoeWhiteGreen, name: 'Fresh Step', tag: 'Kids' },
-  { image: shoeBlackGold, name: 'Luxe Runner', tag: 'Premium' },
-  { image: shoeWhiteTeal, name: 'Crystal Flow', tag: 'Premium' },
-  { image: shoeGreyKnit, name: 'Storm Flex', tag: 'Running' },
-  { image: shoeWhiteNeon, name: 'Neon Surge', tag: 'Sport' },
-  { image: shoeOliveAir, name: 'Safari Air', tag: 'Casual' },
-  { image: shoeGreyBlade, name: 'Blade Runner', tag: 'Athletic' },
-  { image: shoeBlackRed, name: 'Inferno', tag: 'Sport' },
-  { image: shoeBrownSlip, name: 'Glide', tag: 'Slip-On' },
-  { image: shoeKhakiSlip, name: 'Desert Walk', tag: 'Slip-On' },
-  { image: shoeBlackYellowSlip, name: 'Stealth', tag: 'Slip-On' },
-  { image: shoeBlackRedKnit, name: 'Phantom', tag: 'Premium' },
-  { image: shoeDarkStripe, name: 'Power Step', tag: 'Athletic' },
-  { image: shoeWhiteNavyTan, name: 'Harbor', tag: 'Casual' },
-  { image: shoeSpottedYellow, name: 'Cheetah', tag: 'Sport' },
-  { image: shoeRedBlueAir, name: 'Patriot Air', tag: 'Running' },
-  { image: shoeWhiteWing, name: 'Angel Wing', tag: 'Premium' },
-  { image: shoeTanGreen, name: 'Eco Boost', tag: 'Running' },
-  { image: shoeWhiteStripe, name: 'Court Pro', tag: 'Casual' },
-  { image: shoeGreyCloud, name: 'Cloud Walk', tag: 'Comfort' },
-  { image: shoeTealRainbow, name: 'Prism', tag: 'Kids' },
-  { image: shoeOrangeChunky, name: 'Blaze Max', tag: 'Sport' },
-  { image: shoeBlackGer, name: 'Titan', tag: 'Athletic' },
-  { image: shoeWhiteOrangeChunky, name: 'Solar Flare', tag: 'Sport' },
-  { image: shoeGreyYellow, name: 'Volt Strike', tag: 'Running' },
-  { image: shoeNavyWave, name: 'Navy Surge', tag: 'Athletic' },
-  { image: shoeWhiteBlueGradient, name: 'Horizon', tag: 'Running' },
-  { image: shoeBlackBlue700, name: 'Cyber 700', tag: 'Sport' },
-  { image: shoeGreyFashion, name: 'Metro', tag: 'Casual' },
-  { image: shoeWhiteGreenStripe, name: 'Club Classic', tag: 'Casual' },
-  { image: shoePurpleGrey, name: 'Nebula', tag: 'Athletic' },
-  { image: shoeBlackWhiteRetro, name: 'Retro Wave', tag: 'Casual' },
-  { image: shoeWhiteGreen30, name: 'Emerald', tag: 'Premium' },
-  { image: shoeWhiteSkyRun, name: 'Sky Racer', tag: 'Running' },
-  { image: shoeWhiteHighBars, name: 'Apex', tag: 'Premium' },
-  { image: shoeBlackPinkFlame, name: 'Magma', tag: 'Sport' },
-  { image: shoeDarkGreenStripe, name: 'Evergreen', tag: 'Casual' },
-  { image: shoeWhiteBlueKnit, name: 'Breeze Pro', tag: 'Comfort' },
-  { image: shoeBlackFashionGl, name: 'GL-6000', tag: 'Athletic' },
-  { image: shoeAllWhite, name: 'Pure', tag: 'Premium' },
-  { image: shoeWhiteDarkWave, name: 'Contrast', tag: 'Casual' },
-  { image: shoeCreamTanNavy, name: 'Heritage', tag: 'Premium' },
-  { image: shoeWhiteNavyVip, name: 'VIP Elite', tag: 'Premium' },
-  { image: shoeWhiteGreyKnitFashion, name: 'Aero Knit', tag: 'Comfort' },
-  { image: shoeGreyRedChunky, name: 'Reactor', tag: 'Kids' },
-  { image: shoeBlackRedWave, name: 'Go Flash', tag: 'Sport' },
-  { image: shoePurpleTeal, name: 'Galaxy', tag: 'Kids' },
-  { image: shoeWhiteTealRun, name: 'Phantom Run', tag: 'Running' },
-  { image: shoeAllBlackAir, name: 'Stealth Max', tag: 'Athletic' },
-];
+interface ShowcaseItem {
+  image: string;
+  name: string;
+  tag: string;
+}
 
 export function NewArrivalsShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showcaseItems, setShowcaseItems] = useState<ShowcaseItem[]>([]);
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('name, image_url, category:categories(name)')
+        .not('image_url', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      if (data) {
+        const items: ShowcaseItem[] = data
+          .filter((p: any) => p.image_url)
+          .map((p: any) => ({
+            image: p.image_url,
+            name: p.name,
+            tag: p.category?.name || 'Shoes',
+          }));
+        setShowcaseItems(items);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  if (showcaseItems.length === 0) return null;
 
   const next = () => setActiveIndex((i) => (i + 1) % showcaseItems.length);
   const prev = () => setActiveIndex((i) => (i - 1 + showcaseItems.length) % showcaseItems.length);
@@ -137,11 +54,9 @@ export function NewArrivalsShowcase() {
 
   return (
     <section className="py-16 overflow-hidden relative">
-      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
       
       <div className="container relative">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -160,9 +75,7 @@ export function NewArrivalsShowcase() {
           </p>
         </motion.div>
 
-        {/* Carousel */}
         <div className="relative flex items-center justify-center h-[420px] md:h-[480px]">
-          {/* Nav buttons */}
           <button
             onClick={prev}
             className="absolute left-2 md:left-8 z-20 w-10 h-10 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
@@ -176,7 +89,6 @@ export function NewArrivalsShowcase() {
             <ChevronRight className="w-5 h-5" />
           </button>
 
-          {/* Cards */}
           <AnimatePresence mode="popLayout">
             {getVisibleItems().map((item) => {
               const isCenter = item.offset === 0;
@@ -208,7 +120,6 @@ export function NewArrivalsShowcase() {
                       className="w-56 h-72 md:w-72 md:h-96 object-cover"
                       draggable={false}
                     />
-                    {/* Overlay info */}
                     {isCenter && (
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -230,7 +141,6 @@ export function NewArrivalsShowcase() {
           </AnimatePresence>
         </div>
 
-        {/* Dots */}
         <div className="flex justify-center gap-1.5 mt-6">
           {showcaseItems.map((_, i) => (
             <button
