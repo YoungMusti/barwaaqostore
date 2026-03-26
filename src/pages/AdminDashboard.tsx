@@ -70,7 +70,7 @@ export default function AdminDashboard() {
   }
 
   async function fetchData() {
-    const [p, c, o, cat] = await Promise.all([
+    const [p, c, o] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('categories').select('*'),
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
