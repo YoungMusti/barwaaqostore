@@ -14,7 +14,7 @@ import { RecentlyViewedSection } from '@/components/store/RecentlyViewedSection'
 import { BackToTop } from '@/components/store/BackToTop';
 import { LoadingBar } from '@/components/store/LoadingBar';
 import { StickyCartBar } from '@/components/store/StickyCartBar';
-import { FAQSection } from '@/components/store/FAQSection';
+
 import { SocialProofPopup } from '@/components/store/SocialProofPopup';
 import { LiveChatIndicator } from '@/components/store/LiveChatIndicator';
 import { SaleCountdownBanner } from '@/components/store/SaleCountdownBanner';
