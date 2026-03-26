@@ -74,12 +74,10 @@ export default function AdminDashboard() {
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('categories').select('*'),
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
-      supabase.from('catalogues').select('*').order('created_at', { ascending: false }),
     ]);
     if (p.data) setProducts(p.data as Product[]);
     if (c.data) setCategories(c.data as Category[]);
     if (o.data) setOrders(o.data as Order[]);
-    if (cat.data) setCatalogues(cat.data as Catalogue[]);
     setIsLoading(false);
   }
 
