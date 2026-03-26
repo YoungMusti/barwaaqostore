@@ -21,8 +21,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [catalogues, setCatalogues] = useState<Catalogue[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'users' | 'analytics' | 'catalogues' | 'flash-sale'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'users' | 'analytics' | 'flash-sale'>('products');
   const [isLoading, setIsLoading] = useState(true);
   const [productDialog, setProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
