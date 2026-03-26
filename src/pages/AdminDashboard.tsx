@@ -16,14 +16,6 @@ import { ProductVariantsManager } from '@/components/admin/ProductVariantsManage
 import { SaleBannerManager } from '@/components/admin/SaleBannerManager';
 import { SalesCharts } from '@/components/admin/SalesCharts';
 
-interface PlaceholderRemoved {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string;
-  pdf_url: string;
-  created_at: string;
-}
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
