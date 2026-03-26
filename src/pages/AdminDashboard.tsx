@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { LogOut, Package, ShoppingCart, Grid, Plus, Loader2, Pencil, Trash2, Upload, Users, Key, Search, BarChart3, ChevronDown, ChevronUp, DollarSign, TrendingUp, Tag, Settings2, FileText, Flame, Download, AlertTriangle, MessageSquare } from 'lucide-react';
 import { ProductVariantsManager } from '@/components/admin/ProductVariantsManager';
-import { CatalogueManager } from '@/components/admin/CatalogueManager';
+
 import { SaleBannerManager } from '@/components/admin/SaleBannerManager';
 import { SalesCharts } from '@/components/admin/SalesCharts';
 
