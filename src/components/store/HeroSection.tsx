@@ -7,55 +7,34 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { FloatingParticles } from './FloatingParticles';
 import { GradientText } from './GradientText';
-
-import heroMen from '@/assets/hero-men-trainers.jpg';
-import heroWomen from '@/assets/hero-women-trainers.jpg';
-import heroBoys from '@/assets/hero-boys-trainers.jpg';
-import heroGirls from '@/assets/hero-girls-trainers.jpg';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HeroSectionProps {
   onCategorySelect?: (categoryName: string) => void;
 }
 
-const slides = [
-  {
-    image: heroMen,
-    titleEn: "Men's Trainers",
-    titleSo: "Kabaha Ragga",
-    subtitleEn: "Step up your style with premium trainers",
-    subtitleSo: "Kabo cusub oo tayada sare leh",
-    categorySearch: "men"
-  },
-  {
-    image: heroWomen,
-    titleEn: "Women's Trainers",
-    titleSo: "Kabaha Dumarka",
-    subtitleEn: "Elegance meets comfort",
-    subtitleSo: "Qurux iyo raaxo isku dhafan",
-    categorySearch: "women"
-  },
-  {
-    image: heroBoys,
-    titleEn: "Boys' Trainers",
-    titleSo: "Kabaha Wiilasha",
-    subtitleEn: "Built for play, styled for cool",
-    subtitleSo: "Ciyaarta iyo qaabka",
-    categorySearch: "boys"
-  },
-  {
-    image: heroGirls,
-    titleEn: "Girls' Trainers",
-    titleSo: "Kabaha Gabdhaha",
-    subtitleEn: "Fun colors, comfy fit",
-    subtitleSo: "Midab qurux badan, raaxo weyn",
-    categorySearch: "girls"
-  }
-];
+interface HeroSlide {
+  images: string[];
+  titleEn: string;
+  titleSo: string;
+  subtitleEn: string;
+  subtitleSo: string;
+  categorySearch: string;
+}
+
+const categoryMeta: Record<string, { titleEn: string; titleSo: string; subtitleEn: string; subtitleSo: string }> = {
+  men: { titleEn: "Men's Trainers", titleSo: "Kabaha Ragga", subtitleEn: "Step up your style with premium trainers", subtitleSo: "Kabo cusub oo tayada sare leh" },
+  women: { titleEn: "Women's Trainers", titleSo: "Kabaha Dumarka", subtitleEn: "Elegance meets comfort", subtitleSo: "Qurux iyo raaxo isku dhafan" },
+  boys: { titleEn: "Boys' Trainers", titleSo: "Kabaha Wiilasha", subtitleEn: "Built for play, styled for cool", subtitleSo: "Ciyaarta iyo qaabka" },
+  girls: { titleEn: "Girls' Trainers", titleSo: "Kabaha Gabdhaha", subtitleEn: "Fun colors, comfy fit", subtitleSo: "Midab qurux badan, raaxo weyn" },
+};
 
 export function HeroSection({ onCategorySelect }: HeroSectionProps) {
   const { language } = useLanguage();
   const [api, setApi] = useState<any>();
   const [current, setCurrent] = useState(0);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [activeImageIndex, setActiveImageIndex] = useState<Record<number, number>>({});
   const sectionRef = useRef<HTMLElement>(null);
   
   const { scrollYProgress } = useScroll({
@@ -66,14 +45,93 @@ export function HeroSection({ onCategorySelect }: HeroSectionProps) {
   const parallaxY = useTransform(scrollYProgress, [0, 1], [0, 100]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.3]);
 
+  // Fetch enabled categories with in-stock products
+  useEffect(() => {
+    const fetchSlides = async () => {
+      // Get enabled categories
+      const { data: categories } = await supabase
+        .from('categories')
+        .select('id, name, name_somali')
+        .eq('enabled', true);
+
+      if (!categories || categories.length === 0) return;
+
+      const heroSlides: HeroSlide[] = [];
+
+      for (const cat of categories) {
+        const catKey = cat.name.toLowerCase().replace("'s", '').replace(' shoes', '').trim();
+        
+        // Get in-stock products for this category with images
+        const { data: products } = await supabase
+          .from('products')
+          .select('image_url')
+          .eq('category_id', cat.id)
+          .gt('stock', 0)
+          .not('image_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(6);
+
+        if (!products || products.length === 0) continue;
+
+        const images = products.map(p => p.image_url!).filter(Boolean);
+        if (images.length === 0) continue;
+
+        const meta = categoryMeta[catKey] || {
+          titleEn: cat.name,
+          titleSo: cat.name_somali,
+          subtitleEn: 'Premium quality footwear',
+          subtitleSo: 'Kabo tayo sare leh',
+        };
+
+        heroSlides.push({
+          images,
+          categorySearch: catKey,
+          ...meta,
+        });
+      }
+
+      setSlides(heroSlides);
+    };
+
+    fetchSlides();
+
+    // Listen for category changes to update hero in real-time
+    const channel = supabase
+      .channel('hero-categories')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
+        fetchSlides();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // Rotate gallery images for each slide
+  useEffect(() => {
+    if (slides.length === 0) return;
+    const interval = setInterval(() => {
+      setActiveImageIndex(prev => {
+        const next = { ...prev };
+        slides.forEach((slide, i) => {
+          if (slide.images.length > 1) {
+            next[i] = ((prev[i] || 0) + 1) % slide.images.length;
+          }
+        });
+        return next;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [slides]);
+
   useEffect(() => {
     if (!api) return;
-    
     setCurrent(api.selectedScrollSnap());
     api.on('select', () => {
       setCurrent(api.selectedScrollSnap());
     });
   }, [api]);
+
+  if (slides.length === 0) return null;
 
   return (
     <motion.section 
@@ -90,110 +148,123 @@ export function HeroSection({ onCategorySelect }: HeroSectionProps) {
         
         <Carousel
           setApi={setApi}
-          opts={{
-            loop: true,
-          }}
-          plugins={[
-            Autoplay({
-              delay: 5000,
-            }),
-          ]}
+          opts={{ loop: true }}
+          plugins={[Autoplay({ delay: 5000 })]}
           className="h-full"
         >
           <CarouselContent className="-ml-0">
-            {slides.map((slide, index) => (
-              <CarouselItem key={index} className="pl-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 min-h-[350px] md:min-h-[400px]">
-                  {/* Text Content - Left Side */}
-                  <div className="flex flex-col justify-center p-8 md:p-12 order-2 md:order-1 relative z-10">
-                    <motion.div
-                      initial={{ opacity: 0, x: -30 }}
-                      animate={{ opacity: current === index ? 1 : 0, x: current === index ? 0 : -30 }}
-                      transition={{ duration: 0.5, delay: 0.1 }}
-                    >
-                      <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-medium text-primary uppercase tracking-wider">
-                          {language === 'so' ? 'Cusub' : 'New Collection'}
-                        </span>
-                      </div>
-                      
-                      <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
-                        <GradientText>
-                          {language === 'so' ? slide.titleSo : slide.titleEn}
-                        </GradientText>
-                      </h1>
-                    </motion.div>
-                    
-                    <motion.p 
-                      initial={{ opacity: 0, x: -30 }}
-                      animate={{ opacity: current === index ? 1 : 0, x: current === index ? 0 : -30 }}
-                      transition={{ duration: 0.5, delay: 0.2 }}
-                      className="text-base sm:text-lg text-muted-foreground max-w-md mb-6 font-body"
-                    >
-                      {language === 'so' ? slide.subtitleSo : slide.subtitleEn}
-                    </motion.p>
-                    
-                    {/* Shop Now CTA */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: current === index ? 1 : 0, y: current === index ? 0 : 20 }}
-                      transition={{ duration: 0.5, delay: 0.3 }}
-                    >
-                      <Button 
-                        onClick={() => onCategorySelect?.(slide.categorySearch)}
-                        className="mb-6 gap-2 rounded-full group"
-                        size="lg"
+            {slides.map((slide, index) => {
+              const currentImg = activeImageIndex[index] || 0;
+              return (
+                <CarouselItem key={index} className="pl-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 min-h-[350px] md:min-h-[400px]">
+                    {/* Text Content - Left Side */}
+                    <div className="flex flex-col justify-center p-8 md:p-12 order-2 md:order-1 relative z-10">
+                      <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: current === index ? 1 : 0, x: current === index ? 0 : -30 }}
+                        transition={{ duration: 0.5, delay: 0.1 }}
                       >
-                        {language === 'so' ? 'Soo Iibso Hadda' : 'Shop Now'}
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </Button>
-                    </motion.div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Sparkles className="w-4 h-4 text-primary" />
+                          <span className="text-xs font-medium text-primary uppercase tracking-wider">
+                            {language === 'so' ? 'Cusub' : 'New Collection'}
+                          </span>
+                        </div>
+                        
+                        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+                          <GradientText>
+                            {language === 'so' ? slide.titleSo : slide.titleEn}
+                          </GradientText>
+                        </h1>
+                      </motion.div>
+                      
+                      <motion.p 
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: current === index ? 1 : 0, x: current === index ? 0 : -30 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="text-base sm:text-lg text-muted-foreground max-w-md mb-6 font-body"
+                      >
+                        {language === 'so' ? slide.subtitleSo : slide.subtitleEn}
+                      </motion.p>
+                      
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: current === index ? 1 : 0, y: current === index ? 0 : 20 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                      >
+                        <Button 
+                          onClick={() => onCategorySelect?.(slide.categorySearch)}
+                          className="mb-6 gap-2 rounded-full group"
+                          size="lg"
+                        >
+                          {language === 'so' ? 'Soo Iibso Hadda' : 'Shop Now'}
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </motion.div>
+                      
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: current === index ? 1 : 0, y: current === index ? 0 : 20 }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                        className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"
+                      >
+                        <span className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                          <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                          {language === 'so' ? 'Gaadiid Bilaash' : 'Free Delivery'}
+                        </span>
+                        <span className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                          <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                          {language === 'so' ? 'EVC Plus' : 'EVC Plus Payment'}
+                        </span>
+                      </motion.div>
+                    </div>
                     
+                    {/* Image Gallery - Right Side */}
                     <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: current === index ? 1 : 0, y: current === index ? 0 : 20 }}
-                      transition={{ duration: 0.5, delay: 0.4 }}
-                      className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"
+                      className="relative h-[250px] md:h-full order-1 md:order-2 overflow-hidden"
+                      style={{ y: parallaxY }}
                     >
-                      <span className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
-                        <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
-                        {language === 'so' ? 'Gaadiid Bilaash' : 'Free Delivery'}
-                      </span>
-                      <span className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
-                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                        {language === 'so' ? 'EVC Plus' : 'EVC Plus Payment'}
-                      </span>
+                      {slide.images.map((img, imgIdx) => (
+                        <motion.img 
+                          key={img}
+                          src={img} 
+                          alt={language === 'so' ? slide.titleSo : slide.titleEn}
+                          className="absolute inset-0 w-full h-full object-cover object-center"
+                          initial={{ opacity: 0 }}
+                          animate={{ 
+                            opacity: currentImg === imgIdx ? 1 : 0,
+                            scale: currentImg === imgIdx ? 1 : 1.1,
+                          }}
+                          transition={{ duration: 0.8 }}
+                        />
+                      ))}
+                      <div className="absolute inset-0 bg-gradient-to-r from-muted/60 via-muted/20 to-transparent md:block hidden" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-muted/40 via-transparent to-transparent md:hidden" />
+                      
+                      {/* Image dots */}
+                      {slide.images.length > 1 && (
+                        <div className="absolute bottom-3 right-3 flex gap-1 z-10">
+                          {slide.images.map((_, imgIdx) => (
+                            <span
+                              key={imgIdx}
+                              className={`w-1.5 h-1.5 rounded-full transition-all ${
+                                currentImg === imgIdx ? 'bg-primary w-4' : 'bg-foreground/30'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   </div>
-                  
-                  {/* Image - Right Side with parallax */}
-                  <motion.div 
-                    className="relative h-[250px] md:h-full order-1 md:order-2 overflow-hidden"
-                    style={{ y: parallaxY }}
-                  >
-                    <motion.img 
-                      src={slide.image} 
-                      alt={language === 'so' ? slide.titleSo : slide.titleEn}
-                      className="absolute inset-0 w-full h-full object-cover object-center"
-                      initial={{ scale: 1.1 }}
-                      animate={{ scale: current === index ? 1 : 1.1 }}
-                      transition={{ duration: 0.8 }}
-                    />
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-muted/60 via-muted/20 to-transparent md:block hidden" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-muted/40 via-transparent to-transparent md:hidden" />
-                  </motion.div>
-                </div>
-              </CarouselItem>
-            ))}
+                </CarouselItem>
+              );
+            })}
           </CarouselContent>
           
-          {/* Navigation Arrows */}
           <CarouselPrevious className="left-4 bg-background/80 border-none hover:bg-background backdrop-blur-sm" />
           <CarouselNext className="right-4 bg-background/80 border-none hover:bg-background backdrop-blur-sm" />
           
-          {/* Dots Indicator */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
             {slides.map((_, index) => (
               <motion.button
