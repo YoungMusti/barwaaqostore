@@ -801,10 +801,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Catalogues Tab */}
-        {activeTab === 'catalogues' && (
-          <CatalogueManager catalogues={catalogues} onRefresh={fetchData} />
-        )}
 
         {/* Flash Sale Tab */}
         {activeTab === 'flash-sale' && (
