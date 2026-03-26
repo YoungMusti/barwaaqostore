@@ -1,4 +1,4 @@
-import { Home, Search, ShoppingBag, Heart, FileText } from 'lucide-react';
+import { Home, Search, ShoppingBag, Heart } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useLanguage } from '@/hooks/useLanguage';
