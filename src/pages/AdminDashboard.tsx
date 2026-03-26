@@ -360,7 +360,7 @@ export default function AdminDashboard() {
             { key: 'products', icon: Package, label: 'Products' },
             { key: 'orders', icon: ShoppingCart, label: 'Orders' },
             { key: 'categories', icon: Grid, label: 'Categories' },
-            { key: 'catalogues', icon: FileText, label: 'Catalogues' },
+            
             { key: 'flash-sale', icon: Flame, label: 'Flash Sale' },
             { key: 'users', icon: Users, label: 'Admin Users' },
           ].map(tab => (
