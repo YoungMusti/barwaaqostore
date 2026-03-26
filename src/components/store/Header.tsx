@@ -110,13 +110,6 @@ export function Header({ onProductClick }: HeaderProps) {
             <OrderLookup />
           </div>
 
-          {/* Catalogue link - Hidden on mobile */}
-          <Link to="/catalogue" className="hidden md:block">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-2">
-              <FileText className="h-4 w-4" />
-              {language === 'so' ? 'Buug-yar' : 'Catalogue'}
-            </Button>
-          </Link>
 
           {/* Admin link - Hidden on mobile */}
           <Link to="/admin" className="hidden md:block">
