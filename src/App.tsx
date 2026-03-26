@@ -12,7 +12,7 @@ import { CurrencyProvider } from "@/components/store/CurrencyToggle";
 import { MobileBottomNav } from "@/components/store/MobileBottomNav";
 import { AnimatePresence, motion } from 'framer-motion';
 import Index from "./pages/Index";
-import Catalogue from "./pages/Catalogue";
+
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
