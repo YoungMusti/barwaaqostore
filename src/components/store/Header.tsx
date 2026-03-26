@@ -196,14 +196,6 @@ export function Header({ onProductClick }: HeaderProps) {
                 <OrderLookup />
               </div>
               <Link 
-                to="/catalogue" 
-                className="flex items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <FileText className="h-5 w-5" />
-                <span>{language === 'so' ? 'Buug-yar' : 'Catalogue'}</span>
-              </Link>
-              <Link 
                 to="/admin" 
                 className="flex items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}

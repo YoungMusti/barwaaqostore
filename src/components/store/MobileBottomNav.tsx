@@ -24,7 +24,7 @@ export function MobileBottomNav() {
     }},
     { icon: ShoppingBag, label: language === 'so' ? 'Gaari' : 'Cart', path: undefined, action: () => setIsOpen(true), badge: totalItems },
     { icon: Heart, label: language === 'so' ? 'Jeclaad' : 'Wishlist', path: '/?wishlist=true', action: undefined, badge: wishlistItems.length },
-    { icon: FileText, label: language === 'so' ? 'Buug' : 'Catalogue', path: '/catalogue', action: undefined },
+    
   ];
 
   return (

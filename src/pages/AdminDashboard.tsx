@@ -16,7 +16,7 @@ import { ProductVariantsManager } from '@/components/admin/ProductVariantsManage
 import { SaleBannerManager } from '@/components/admin/SaleBannerManager';
 import { SalesCharts } from '@/components/admin/SalesCharts';
 
-interface Catalogue {
+interface PlaceholderRemoved {
   id: string;
   title: string;
   description: string | null;
