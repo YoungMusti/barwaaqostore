@@ -110,13 +110,6 @@ export function Header({ onProductClick }: HeaderProps) {
             <OrderLookup />
           </div>
 
-          {/* Catalogue link - Hidden on mobile */}
-          <Link to="/catalogue" className="hidden md:block">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-2">
-              <FileText className="h-4 w-4" />
-              {language === 'so' ? 'Buug-yar' : 'Catalogue'}
-            </Button>
-          </Link>
 
           {/* Admin link - Hidden on mobile */}
           <Link to="/admin" className="hidden md:block">
@@ -202,14 +195,6 @@ export function Header({ onProductClick }: HeaderProps) {
               <div className="p-3">
                 <OrderLookup />
               </div>
-              <Link 
-                to="/catalogue" 
-                className="flex items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <FileText className="h-5 w-5" />
-                <span>{language === 'so' ? 'Buug-yar' : 'Catalogue'}</span>
-              </Link>
               <Link 
                 to="/admin" 
                 className="flex items-center gap-2 p-3 rounded-lg hover:bg-muted transition-colors"
