@@ -346,7 +346,7 @@ export default function Index() {
       <DeliveryInfo />
 
       <RecentlyViewedSection onProductClick={handleProductClick} />
-      <FAQSection />
+      
       <Footer />
       <CartDrawer />
       <ProductDetailModal 
