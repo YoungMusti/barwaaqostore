@@ -672,9 +672,9 @@ export default function AdminDashboard() {
                 size="sm"
                 className="gap-2"
                 onClick={() => {
-                  const csvRows = ['Phone,Amount,Status,Payment Method,Reference,Date,Notes'];
+                  const csvRows = ['Name,Phone,Amount,Status,Payment Method,Reference,Delivery,Address,Notes,Date'];
                   orders.forEach(o => {
-                    csvRows.push(`"${o.customer_phone}",${o.total_amount},"${o.status}","${o.payment_method}","${o.payment_reference || ''}","${new Date(o.created_at).toLocaleDateString()}","${(o as any).admin_notes || ''}"`);
+                    csvRows.push(`"${(o as any).customer_name || ''}","${o.customer_phone}",${o.total_amount},"${o.status}","${o.payment_method}","${o.payment_reference || ''}","${(o as any).delivery_method || ''}","${(o as any).delivery_address || ''}","${(o as any).order_notes || ''}","${new Date(o.created_at).toLocaleDateString()}"`);
                   });
                   const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
                   const url = URL.createObjectURL(blob);
@@ -690,66 +690,151 @@ export default function AdminDashboard() {
                 Export CSV
               </Button>
             </div>
-            <div className="divide-y">
-              {orders.map(o => (
-                <div key={o.id} className="py-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{o.customer_phone}</p>
-                        <button 
-                          onClick={() => setExpandedOrder(expandedOrder === o.id ? null : o.id)}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          {expandedOrder === o.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </button>
+            <div className="space-y-4">
+              {orders.map(o => {
+                const isExpanded = expandedOrder === o.id;
+                const orderData = o as any;
+                return (
+                  <div key={o.id} className="border rounded-xl overflow-hidden">
+                    {/* Order header */}
+                    <div className="p-4 flex justify-between items-start bg-secondary/30 cursor-pointer" onClick={() => setExpandedOrder(isExpanded ? null : o.id)}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {orderData.customer_name && <span className="font-semibold">{orderData.customer_name}</span>}
+                          <span className="text-sm text-muted-foreground">{o.customer_phone}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            o.status === 'completed' ? 'bg-success/10 text-success' :
+                            o.status === 'paid' ? 'bg-primary/10 text-primary' :
+                            o.status === 'cancelled' ? 'bg-destructive/10 text-destructive' :
+                            o.status === 'processing' ? 'bg-warning/10 text-warning' :
+                            'bg-muted text-muted-foreground'
+                          }`}>
+                            {o.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
+                          <span className="font-medium text-foreground">${o.total_amount}</span>
+                          <span>💳 {o.payment_method}</span>
+                          <span>🚚 {orderData.delivery_method === 'delivery' ? 'Delivery' : 'Collection'}</span>
+                          <span>{new Date(o.created_at).toLocaleString()}</span>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">Ref: {o.payment_reference || 'N/A'}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</p>
+                      <div className="flex items-center gap-2 ml-2">
+                        <select value={o.status} onChange={e => { e.stopPropagation(); updateOrderStatus(o.id, e.target.value as Order['status']); }} className="border rounded-lg px-3 py-1 text-sm bg-background">
+                          {['pending', 'paid', 'processing', 'completed', 'cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </div>
                     </div>
-                    <select value={o.status} onChange={e => updateOrderStatus(o.id, e.target.value as Order['status'])} className="border rounded-lg px-3 py-1 text-sm">
-                      {['pending', 'paid', 'processing', 'completed', 'cancelled'].map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  
-                  {/* Order Items */}
-                  {expandedOrder === o.id && o.order_items && o.order_items.length > 0 && (
-                    <div className="mt-3 p-3 bg-secondary/50 rounded-lg">
-                      <p className="text-sm font-medium mb-2">Order Items:</p>
-                      <div className="space-y-2">
-                        {o.order_items.map((item: OrderItem) => (
-                          <div key={item.id} className="flex justify-between text-sm">
-                            <span>{item.product_name} × {item.quantity}</span>
-                            <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    
+                    {/* Expanded details */}
+                    {isExpanded && (
+                      <div className="p-4 space-y-4 border-t">
+                        {/* Customer details grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-0.5">👤 Full Name</p>
+                            <p className="font-medium text-sm">{orderData.customer_name || 'N/A'}</p>
                           </div>
-                        ))}
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-0.5">📞 Phone</p>
+                            <p className="font-medium text-sm">{o.customer_phone}</p>
+                          </div>
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-0.5">💳 Payment</p>
+                            <p className="font-medium text-sm">{o.payment_method}</p>
+                          </div>
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-0.5">🧾 Reference</p>
+                            <p className="font-medium text-sm">{o.payment_reference || 'N/A'}</p>
+                          </div>
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-0.5">🚚 Order Type</p>
+                            <p className="font-medium text-sm capitalize">{orderData.delivery_method || 'collection'}</p>
+                          </div>
+                          {orderData.delivery_method === 'delivery' && orderData.delivery_address && (
+                            <div className="bg-secondary/50 rounded-lg p-3">
+                              <p className="text-xs text-muted-foreground mb-0.5">📍 Address</p>
+                              <p className="font-medium text-sm">{orderData.delivery_address}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Customer notes */}
+                        {orderData.order_notes && (
+                          <div className="bg-accent/30 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-0.5">📝 Customer Notes</p>
+                            <p className="text-sm">{orderData.order_notes}</p>
+                          </div>
+                        )}
+
+                        {/* Order items with images */}
+                        {o.order_items && o.order_items.length > 0 && (
+                          <div>
+                            <p className="text-sm font-semibold mb-2">📦 Order Items</p>
+                            <div className="space-y-2">
+                              {o.order_items.map((item: OrderItem) => {
+                                const product = products.find(p => p.id === item.product_id);
+                                return (
+                                  <div key={item.id} className="flex items-center gap-3 p-2 bg-secondary/30 rounded-lg">
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                                      {product?.image_url ? (
+                                        <img src={product.image_url} alt={item.product_name} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <Package className="w-5 h-5 text-muted-foreground/30" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-sm">{item.product_name}</p>
+                                      <div className="flex gap-2 text-xs text-muted-foreground">
+                                        {item.selected_size && <span>Size: {item.selected_size}</span>}
+                                        {item.selected_color && <span>Color: {item.selected_color}</span>}
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-sm font-medium">x{item.quantity}</p>
+                                      <p className="text-sm font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Total */}
+                        <div className="flex justify-between items-center pt-2 border-t">
+                          <span className="font-semibold">💰 Total</span>
+                          <span className="text-lg font-bold">${o.total_amount}</span>
+                        </div>
+
+                        {/* Admin notes */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <MessageSquare className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-xs font-medium text-muted-foreground">Admin Notes</span>
+                          </div>
+                          <Textarea
+                            placeholder="Add internal notes about this order..."
+                            defaultValue={orderData.admin_notes || ''}
+                            className="text-sm h-16"
+                            onBlur={async (e) => {
+                              const notes = e.target.value;
+                              await supabase.from('orders').update({ admin_notes: notes } as any).eq('id', o.id);
+                              toast.success('Note saved');
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  
-                  {/* Order Notes */}
-                  {expandedOrder === o.id && (
-                    <div className="mt-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <MessageSquare className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-xs font-medium text-muted-foreground">Admin Notes</span>
-                      </div>
-                      <Textarea
-                        placeholder="Add internal notes about this order..."
-                        defaultValue={(o as any).admin_notes || ''}
-                        className="text-sm h-16"
-                        onBlur={async (e) => {
-                          const notes = e.target.value;
-                          await supabase.from('orders').update({ admin_notes: notes } as any).eq('id', o.id);
-                          toast.success('Note saved');
-                        }}
-                      />
-                    </div>
-                  )}
-                  
-                  <p className="font-semibold mt-2">${o.total_amount}</p>
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
+              {orders.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">No orders yet</p>
+              )}
             </div>
           </div>
         )}
