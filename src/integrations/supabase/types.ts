@@ -144,8 +144,12 @@ export type Database = {
         Row: {
           admin_notes: string | null
           created_at: string
+          customer_name: string | null
           customer_phone: string
+          delivery_address: string | null
+          delivery_method: string
           id: string
+          order_notes: string | null
           payment_method: string
           payment_reference: string | null
           status: Database["public"]["Enums"]["order_status"]
@@ -154,8 +158,12 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           created_at?: string
+          customer_name?: string | null
           customer_phone: string
+          delivery_address?: string | null
+          delivery_method?: string
           id?: string
+          order_notes?: string | null
           payment_method?: string
           payment_reference?: string | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -164,8 +172,12 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           created_at?: string
+          customer_name?: string | null
           customer_phone?: string
+          delivery_address?: string | null
+          delivery_method?: string
           id?: string
+          order_notes?: string | null
           payment_method?: string
           payment_reference?: string | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -406,18 +418,35 @@ export type Database = {
         Args: { _max_orders?: number; _phone: string; _window_minutes?: number }
         Returns: boolean
       }
-      create_validated_order: {
-        Args: {
-          _customer_phone: string
-          _items: Json
-          _payment_method: string
-          _payment_reference: string
-        }
-        Returns: {
-          error_message: string
-          order_id: string
-        }[]
-      }
+      create_validated_order:
+        | {
+            Args: {
+              _customer_phone: string
+              _items: Json
+              _payment_method: string
+              _payment_reference: string
+            }
+            Returns: {
+              error_message: string
+              order_id: string
+            }[]
+          }
+        | {
+            Args: {
+              _customer_name?: string
+              _customer_phone: string
+              _delivery_address?: string
+              _delivery_method?: string
+              _items: Json
+              _order_notes?: string
+              _payment_method: string
+              _payment_reference: string
+            }
+            Returns: {
+              error_message: string
+              order_id: string
+            }[]
+          }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -59,6 +59,11 @@ export interface Order {
   payment_method: string;
   status: OrderStatus;
   created_at: string;
+  admin_notes?: string | null;
+  customer_name?: string | null;
+  delivery_method?: string;
+  delivery_address?: string | null;
+  order_notes?: string | null;
   order_items?: OrderItem[];
 }
 
