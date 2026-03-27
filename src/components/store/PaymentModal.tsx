@@ -78,14 +78,15 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
         selected_color: item.selectedColor || null,
       }));
 
-      const notePart = note.trim() ? ` | Note: ${note.trim()}` : '';
-      const locationPart = deliveryMethod === 'delivery' ? ` | Addr: ${location.trim()}` : '';
-
       const { data, error } = await supabase.rpc('create_validated_order', {
         _customer_phone: phone.trim(),
-        _payment_reference: `[${paymentMethod}] ${reference.trim()} | ${fullName.trim()} | ${deliveryMethod}${locationPart}${notePart}`,
+        _payment_reference: reference.trim(),
         _payment_method: paymentMethod,
         _items: orderItems,
+        _customer_name: fullName.trim(),
+        _delivery_method: deliveryMethod,
+        _delivery_address: deliveryMethod === 'delivery' ? location.trim() : null,
+        _order_notes: note.trim() || null,
       });
 
       if (error) throw error;
@@ -196,7 +197,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 })}
               </div>
 
-              {/* Customer info: Full Name & Phone */}
+              {/* Customer info */}
               <div className="space-y-3 border-t pt-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="fullName" className="flex items-center gap-2 text-sm">
@@ -241,7 +242,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 </div>
               </div>
 
-              {/* Address - only shown for delivery */}
+              {/* Address - only for delivery */}
               {deliveryMethod === 'delivery' && (
                 <div className="space-y-1.5">
                   <Label htmlFor="location" className="flex items-center gap-2 text-sm">
@@ -284,7 +285,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
               <DialogTitle className="font-display text-xl">Payment</DialogTitle>
             </DialogHeader>
             <div className="space-y-5 py-2">
-              {/* Payment method selection */}
+              {/* Payment method */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Choose Payment Method</Label>
                 <div className="grid grid-cols-2 gap-3">
@@ -327,7 +328,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 </p>
               </div>
 
-              {/* Reference field */}
+              {/* Reference & Note */}
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="reference" className="flex items-center gap-2 text-sm">
@@ -345,7 +346,6 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                   {errors.reference && <p className="text-xs text-destructive">{errors.reference}</p>}
                 </div>
 
-                {/* Note (optional) */}
                 <div className="space-y-1.5">
                   <Label htmlFor="note" className="flex items-center gap-2 text-sm text-muted-foreground">
                     📝 Note (optional)
