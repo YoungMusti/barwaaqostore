@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useCart, getEffectivePrice } from '@/hooks/useCart';
 import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CheckCircle, Phone, Receipt, Loader2, User, MapPin, Truck, Store, MessageCircle, ShoppingBag } from 'lucide-react';
+import { CheckCircle, Phone, Receipt, Loader2, User, MapPin, Truck, Store, MessageCircle, ShoppingBag, Clock } from 'lucide-react';
 
 interface PaymentModalProps {
   open: boolean;
@@ -30,11 +31,12 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const { t } = useLanguage();
   const [step, setStep] = useState<'review' | 'payment' | 'success'>('review');
   const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('+252');
   const [location, setLocation] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('collection');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('EVC');
-  const [phone, setPhone] = useState('+252');
   const [reference, setReference] = useState('');
+  const [note, setNote] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -46,18 +48,18 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const validateReview = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!fullName.trim()) newErrors.fullName = 'Full name is required';
-    if (!location.trim()) newErrors.location = 'Location is required';
+    const trimmedPhone = phone.trim();
+    if (!trimmedPhone || trimmedPhone === '+252') newErrors.phone = 'Phone number is required';
+    else if (!PHONE_REGEX.test(trimmedPhone)) newErrors.phone = 'Invalid format. Use +252 followed by 8-9 digits';
+    if (deliveryMethod === 'delivery' && !location.trim()) newErrors.location = 'Delivery address is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validatePayment = (): boolean => {
     const newErrors: Record<string, string> = {};
-    const trimmedPhone = phone.trim();
-    if (!trimmedPhone) newErrors.phone = 'Phone number is required';
-    else if (!PHONE_REGEX.test(trimmedPhone)) newErrors.phone = 'Invalid format. Use +252 followed by 8-9 digits';
     const trimmedRef = reference.trim();
-    if (!trimmedRef) newErrors.reference = 'Payment reference is required';
+    if (!trimmedRef) newErrors.reference = paymentMethod === 'EVC' ? 'Transaction date & time is required' : 'Payment reference is required';
     else if (trimmedRef.length > MAX_REFERENCE_LENGTH) newErrors.reference = `Max ${MAX_REFERENCE_LENGTH} characters`;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -76,9 +78,12 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
         selected_color: item.selectedColor || null,
       }));
 
+      const notePart = note.trim() ? ` | Note: ${note.trim()}` : '';
+      const locationPart = deliveryMethod === 'delivery' ? ` | Addr: ${location.trim()}` : '';
+
       const { data, error } = await supabase.rpc('create_validated_order', {
         _customer_phone: phone.trim(),
-        _payment_reference: `[${paymentMethod}] ${reference.trim()} | ${fullName.trim()} | ${location.trim()} | ${deliveryMethod}`,
+        _payment_reference: `[${paymentMethod}] ${reference.trim()} | ${fullName.trim()} | ${deliveryMethod}${locationPart}${notePart}`,
         _payment_method: paymentMethod,
         _items: orderItems,
       });
@@ -93,11 +98,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
       setStep('success');
     } catch (error: any) {
       console.error('Order error:', error);
-      if (error.message?.includes('check_phone_format')) {
-        setErrors({ phone: 'Invalid phone format' });
-      } else {
-        toast.error('Failed to create order. Please try again.');
-      }
+      toast.error('Failed to create order. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -107,11 +108,12 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
     onOpenChange(false);
     setStep('review');
     setFullName('');
+    setPhone('+252');
     setLocation('');
     setDeliveryMethod('collection');
     setPaymentMethod('EVC');
-    setPhone('+252');
     setReference('');
+    setNote('');
     setErrors({});
   };
 
@@ -130,7 +132,10 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
 
     const msg = encodeURIComponent(
       `🛒 *New Order - Barwaaqo Store*\n\n` +
-      `👤 Name: ${fullName}\n📍 Location: ${location}\n🚚 ${deliveryMethod === 'delivery' ? 'Delivery' : 'Collection'}\n💳 ${paymentMethod}\n📱 ${phone}\n🧾 Ref: ${reference}\n\n` +
+      `👤 Name: ${fullName}\n📱 Phone: ${phone}\n` +
+      `${deliveryMethod === 'delivery' ? `📍 Address: ${location}\n` : ''}` +
+      `🚚 ${deliveryMethod === 'delivery' ? 'Delivery' : 'Collection'}\n💳 ${paymentMethod}\n🧾 Ref: ${reference}\n` +
+      `${note.trim() ? `📝 Note: ${note}\n` : ''}\n` +
       `*Items:*\n${itemsList}\n\n` +
       `${deliveryMethod === 'delivery' ? `🚚 Delivery Fee: $${DELIVERY_FEE.toFixed(2)}\n` : ''}` +
       `💰 *Total: $${finalTotal.toFixed(2)}*`
@@ -191,11 +196,11 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 })}
               </div>
 
-              {/* Customer info */}
+              {/* Customer info: Full Name & Phone */}
               <div className="space-y-3 border-t pt-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="fullName" className="flex items-center gap-2 text-sm">
-                    <User className="w-4 h-4" /> Full Name
+                    <User className="w-4 h-4" /> Full Name <span className="text-destructive">*</span>
                   </Label>
                   <Input id="fullName" placeholder="Enter your full name" value={fullName}
                     onChange={e => { setFullName(e.target.value); if (errors.fullName) setErrors(p => ({ ...p, fullName: undefined as any })); }}
@@ -203,13 +208,13 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                   {errors.fullName && <p className="text-xs text-destructive">{errors.fullName}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="location" className="flex items-center gap-2 text-sm">
-                    <MapPin className="w-4 h-4" /> Location / Address
+                  <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
+                    <Phone className="w-4 h-4" /> Phone Number <span className="text-destructive">*</span>
                   </Label>
-                  <Input id="location" placeholder="Enter your location" value={location}
-                    onChange={e => { setLocation(e.target.value); if (errors.location) setErrors(p => ({ ...p, location: undefined as any })); }}
-                    className={`h-11 rounded-xl ${errors.location ? 'border-destructive' : ''}`} />
-                  {errors.location && <p className="text-xs text-destructive">{errors.location}</p>}
+                  <Input id="phone" type="tel" placeholder="+252 61 xxx xxxx" value={phone}
+                    onChange={e => handlePhoneChange(e.target.value)}
+                    className={`h-11 rounded-xl ${errors.phone ? 'border-destructive' : ''}`} />
+                  {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
                 </div>
               </div>
 
@@ -218,7 +223,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 <Label className="text-sm font-medium">How would you like to receive your order?</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => setDeliveryMethod('collection')}
+                    onClick={() => { setDeliveryMethod('collection'); setLocation(''); }}
                     className={`p-3 rounded-xl border-2 text-center transition-all ${deliveryMethod === 'collection' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
                   >
                     <Store className="w-5 h-5 mx-auto mb-1" />
@@ -235,6 +240,19 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                   </button>
                 </div>
               </div>
+
+              {/* Address - only shown for delivery */}
+              {deliveryMethod === 'delivery' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="location" className="flex items-center gap-2 text-sm">
+                    <MapPin className="w-4 h-4" /> Delivery Address <span className="text-destructive">*</span>
+                  </Label>
+                  <Input id="location" placeholder="Enter your delivery address" value={location}
+                    onChange={e => { setLocation(e.target.value); if (errors.location) setErrors(p => ({ ...p, location: undefined as any })); }}
+                    className={`h-11 rounded-xl ${errors.location ? 'border-destructive' : ''}`} />
+                  {errors.location && <p className="text-xs text-destructive">{errors.location}</p>}
+                </div>
+              )}
 
               {/* Total */}
               <div className="border-t pt-3 space-y-1">
@@ -271,14 +289,14 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 <Label className="text-sm font-medium">Choose Payment Method</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => setPaymentMethod('EVC')}
+                    onClick={() => { setPaymentMethod('EVC'); setReference(''); }}
                     className={`p-3 rounded-xl border-2 text-center transition-all ${paymentMethod === 'EVC' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
                   >
                     <p className="font-bold text-sm">EVC Plus</p>
                     <p className="text-xs text-muted-foreground">Hormuud</p>
                   </button>
                   <button
-                    onClick={() => setPaymentMethod('SALAAM')}
+                    onClick={() => { setPaymentMethod('SALAAM'); setReference(''); }}
                     className={`p-3 rounded-xl border-2 text-center transition-all ${paymentMethod === 'SALAAM' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
                   >
                     <p className="font-bold text-sm">Salaam Bank</p>
@@ -309,25 +327,32 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 </p>
               </div>
 
-              {/* Phone & Reference */}
+              {/* Reference field */}
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4" /> {t('enterPhone')}
-                  </Label>
-                  <Input id="phone" type="tel" placeholder="+252 61 xxx xxxx" value={phone}
-                    onChange={e => handlePhoneChange(e.target.value)}
-                    className={`h-11 rounded-xl ${errors.phone ? 'border-destructive' : ''}`} />
-                  {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
-                </div>
-                <div className="space-y-1.5">
                   <Label htmlFor="reference" className="flex items-center gap-2 text-sm">
-                    <Receipt className="w-4 h-4" /> {paymentMethod === 'EVC' ? t('enterReference') : 'Salaam Bank Reference'}
+                    {paymentMethod === 'EVC' ? (
+                      <><Clock className="w-4 h-4" /> EVC Transaction Date & Time <span className="text-destructive">*</span></>
+                    ) : (
+                      <><Receipt className="w-4 h-4" /> Salaam Bank Reference <span className="text-destructive">*</span></>
+                    )}
                   </Label>
-                  <Input id="reference" placeholder={paymentMethod === 'EVC' ? 'EVC Reference / Tixraaca' : 'Salaam Bank Reference'}
-                    value={reference} onChange={e => { if (e.target.value.length <= MAX_REFERENCE_LENGTH) { setReference(e.target.value); if (errors.reference) setErrors(p => ({ ...p, reference: undefined as any })); } }}
+                  <Input id="reference"
+                    placeholder={paymentMethod === 'EVC' ? 'e.g. 27 Mar 2026, 3:45 PM' : 'Enter Salaam Bank reference'}
+                    value={reference}
+                    onChange={e => { if (e.target.value.length <= MAX_REFERENCE_LENGTH) { setReference(e.target.value); if (errors.reference) setErrors(p => ({ ...p, reference: undefined as any })); } }}
                     className={`h-11 rounded-xl ${errors.reference ? 'border-destructive' : ''}`} maxLength={MAX_REFERENCE_LENGTH} />
                   {errors.reference && <p className="text-xs text-destructive">{errors.reference}</p>}
+                </div>
+
+                {/* Note (optional) */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="note" className="flex items-center gap-2 text-sm text-muted-foreground">
+                    📝 Note (optional)
+                  </Label>
+                  <Textarea id="note" placeholder="Any additional instructions or notes..."
+                    value={note} onChange={e => setNote(e.target.value)}
+                    className="rounded-xl min-h-[70px] resize-none" rows={2} />
                 </div>
               </div>
 
