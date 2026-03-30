@@ -125,25 +125,6 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
     if (errors.phone) setErrors(prev => ({ ...prev, phone: undefined as any }));
   };
 
-  const openWhatsApp = () => {
-    const itemsList = items.map(item => {
-      const price = getEffectivePrice(item.product);
-      return `• ${item.product.name}${item.selectedSize ? ` (Size: ${item.selectedSize})` : ''}${item.selectedColor ? ` (${item.selectedColor})` : ''} x${item.quantity} - $${(price * item.quantity).toFixed(2)}`;
-    }).join('\n');
-
-    const msg = encodeURIComponent(
-      `🛒 *New Order - Barwaaqo Store*\n\n` +
-      `👤 Name: ${fullName}\n📱 Phone: ${phone}\n` +
-      `${deliveryMethod === 'delivery' ? `📍 Address: ${location}\n` : ''}` +
-      `🚚 ${deliveryMethod === 'delivery' ? 'Delivery' : 'Collection'}\n💳 ${paymentMethod}\n🧾 Ref: ${reference}\n` +
-      `${note.trim() ? `📝 Note: ${note}\n` : ''}\n` +
-      `*Items:*\n${itemsList}\n\n` +
-      `${deliveryMethod === 'delivery' ? `🚚 Delivery Fee: $${DELIVERY_FEE.toFixed(2)}\n` : ''}` +
-      `💰 *Total: $${finalTotal.toFixed(2)}*`
-    );
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
