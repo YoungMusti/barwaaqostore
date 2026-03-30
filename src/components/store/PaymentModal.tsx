@@ -8,7 +8,7 @@ import { useCart, getEffectivePrice } from '@/hooks/useCart';
 import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CheckCircle, Phone, Receipt, Loader2, User, MapPin, Truck, Store, MessageCircle, ShoppingBag, Clock } from 'lucide-react';
+import { CheckCircle, Phone, Receipt, Loader2, User, MapPin, Truck, Store, ShoppingBag, Clock } from 'lucide-react';
 
 interface PaymentModalProps {
   open: boolean;
@@ -18,7 +18,7 @@ interface PaymentModalProps {
 const EVC_BUSINESS_NUMBER = '612502108';
 const SALAAM_ACCOUNT = '38512769';
 const DELIVERY_FEE = 2;
-const WHATSAPP_NUMBER = '252612502108';
+
 
 const PHONE_REGEX = /^\+252[0-9]{8,9}$/;
 const MAX_REFERENCE_LENGTH = 100;
@@ -125,25 +125,6 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
     if (errors.phone) setErrors(prev => ({ ...prev, phone: undefined as any }));
   };
 
-  const openWhatsApp = () => {
-    const itemsList = items.map(item => {
-      const price = getEffectivePrice(item.product);
-      return `• ${item.product.name}${item.selectedSize ? ` (Size: ${item.selectedSize})` : ''}${item.selectedColor ? ` (${item.selectedColor})` : ''} x${item.quantity} - $${(price * item.quantity).toFixed(2)}`;
-    }).join('\n');
-
-    const msg = encodeURIComponent(
-      `🛒 *New Order - Barwaaqo Store*\n\n` +
-      `👤 Name: ${fullName}\n📱 Phone: ${phone}\n` +
-      `${deliveryMethod === 'delivery' ? `📍 Address: ${location}\n` : ''}` +
-      `🚚 ${deliveryMethod === 'delivery' ? 'Delivery' : 'Collection'}\n💳 ${paymentMethod}\n🧾 Ref: ${reference}\n` +
-      `${note.trim() ? `📝 Note: ${note}\n` : ''}\n` +
-      `*Items:*\n${itemsList}\n\n` +
-      `${deliveryMethod === 'delivery' ? `🚚 Delivery Fee: $${DELIVERY_FEE.toFixed(2)}\n` : ''}` +
-      `💰 *Total: $${finalTotal.toFixed(2)}*`
-    );
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -153,11 +134,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
               <CheckCircle className="w-8 h-8 text-success" />
             </div>
             <h2 className="font-display text-2xl font-semibold mb-2">{t('thankYou')}</h2>
-            <p className="text-muted-foreground mb-4">Your order has been placed! Please contact us on WhatsApp to confirm.</p>
-            <Button onClick={openWhatsApp} className="w-full h-12 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white mb-3">
-              <MessageCircle className="w-5 h-5 mr-2" />
-              Contact on WhatsApp
-            </Button>
+            <p className="text-muted-foreground mb-4">Your order has been placed successfully! We will process it shortly.</p>
             <Button variant="outline" onClick={handleClose} className="rounded-full">
               {t('backToShop')}
             </Button>
