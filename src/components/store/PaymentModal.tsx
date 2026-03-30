@@ -8,7 +8,7 @@ import { useCart, getEffectivePrice } from '@/hooks/useCart';
 import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CheckCircle, Phone, Receipt, Loader2, User, MapPin, Truck, Store, MessageCircle, ShoppingBag, Clock } from 'lucide-react';
+import { CheckCircle, Phone, Receipt, Loader2, User, MapPin, Truck, Store, ShoppingBag, Clock } from 'lucide-react';
 
 interface PaymentModalProps {
   open: boolean;
