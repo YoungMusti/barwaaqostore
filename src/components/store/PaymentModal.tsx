@@ -153,11 +153,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
               <CheckCircle className="w-8 h-8 text-success" />
             </div>
             <h2 className="font-display text-2xl font-semibold mb-2">{t('thankYou')}</h2>
-            <p className="text-muted-foreground mb-4">Your order has been placed! Please contact us on WhatsApp to confirm.</p>
-            <Button onClick={openWhatsApp} className="w-full h-12 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white mb-3">
-              <MessageCircle className="w-5 h-5 mr-2" />
-              Contact on WhatsApp
-            </Button>
+            <p className="text-muted-foreground mb-4">Your order has been placed successfully! We will process it shortly.</p>
             <Button variant="outline" onClick={handleClose} className="rounded-full">
               {t('backToShop')}
             </Button>
