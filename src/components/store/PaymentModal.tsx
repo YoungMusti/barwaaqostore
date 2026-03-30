@@ -18,7 +18,7 @@ interface PaymentModalProps {
 const EVC_BUSINESS_NUMBER = '612502108';
 const SALAAM_ACCOUNT = '38512769';
 const DELIVERY_FEE = 2;
-const WHATSAPP_NUMBER = '252612502108';
+
 
 const PHONE_REGEX = /^\+252[0-9]{8,9}$/;
 const MAX_REFERENCE_LENGTH = 100;
