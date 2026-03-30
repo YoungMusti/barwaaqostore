@@ -2,15 +2,21 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { Product } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
+
+interface NewArrivalsShowcaseProps {
+  onProductClick?: (product: Product) => void;
+}
 
 interface ShowcaseItem {
   image: string;
   name: string;
   tag: string;
+  product: Product;
 }
 
-export function NewArrivalsShowcase() {
+export function NewArrivalsShowcase({ onProductClick }: NewArrivalsShowcaseProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showcaseItems, setShowcaseItems] = useState<ShowcaseItem[]>([]);
   const { t } = useLanguage();
@@ -19,18 +25,19 @@ export function NewArrivalsShowcase() {
     const fetchProducts = async () => {
       const { data } = await supabase
         .from('products')
-        .select('name, image_url, category:categories(name)')
+        .select('*, category:categories(*)')
         .not('image_url', 'is', null)
         .order('created_at', { ascending: false })
         .limit(30);
 
       if (data) {
-        const items: ShowcaseItem[] = data
-          .filter((p: any) => p.image_url)
-          .map((p: any) => ({
-            image: p.image_url,
+        const items: ShowcaseItem[] = (data as Product[])
+          .filter((p) => p.image_url)
+          .map((p) => ({
+            image: p.image_url!,
             name: p.name,
-            tag: p.category?.name || 'Shoes',
+            tag: (p as any).category?.name || 'Shoes',
+            product: p,
           }));
         setShowcaseItems(items);
       }
@@ -109,7 +116,11 @@ export function NewArrivalsShowcase() {
                   }}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   onClick={() => {
-                    if (item.offset !== 0) setActiveIndex(item.idx);
+                    if (item.offset !== 0) {
+                      setActiveIndex(item.idx);
+                    } else if (onProductClick) {
+                      onProductClick(item.product);
+                    }
                   }}
                   style={{ zIndex }}
                 >
@@ -132,6 +143,7 @@ export function NewArrivalsShowcase() {
                         <h3 className="text-white font-display text-xl font-bold">
                           {item.name}
                         </h3>
+                        <p className="text-white/70 text-sm mt-1">Tap to view details</p>
                       </motion.div>
                     )}
                   </div>

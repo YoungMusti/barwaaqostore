@@ -210,7 +210,7 @@ export default function Index() {
       <TrustSignals />
       
       {/* New Arrivals Showcase */}
-      <NewArrivalsShowcase />
+      <NewArrivalsShowcase onProductClick={handleProductClick} />
       
       <CategoryQuickLinks 
         categories={categories}
