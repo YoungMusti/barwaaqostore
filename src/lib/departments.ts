@@ -1,12 +1,18 @@
 import type { Category } from '@/types/database';
 
 export const departments = [
-  { key: 'men', path: '/', name: "Men’s Shoes", nameSo: 'Kabaha Ragga' },
+  { key: 'men', path: '/mens-shoes', name: "Men’s Shoes", nameSo: 'Kabaha Ragga' },
   { key: 'women', path: '/womens-shoes', name: "Women’s Shoes", nameSo: 'Kabaha Dumarka' },
   { key: 'cosmetics', path: '/cosmetics', name: 'Cosmetics', nameSo: 'Qurxinta' },
 ] as const;
 
 export type DepartmentKey = typeof departments[number]['key'];
+
+export const storePages = [{ key: 'home', path: '/', name: 'Home', nameSo: 'Guriga' }, ...departments] as const;
+
+export function visibleCategories(categories: Category[], department?: DepartmentKey) {
+  return categories.filter(category => category.enabled && (!department || matchesDepartment(category, department)));
+}
 
 export function matchesDepartment(category: Pick<Category, 'name'>, department: DepartmentKey) {
   const name = category.name.toLowerCase().replace(/[’']/g, '').trim();

@@ -7,10 +7,12 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { FloatingParticles } from './FloatingParticles';
 import { GradientText } from './GradientText';
-import { supabase } from '@/integrations/supabase/client';
+import { Product, Category } from '@/types/database';
 
 interface HeroSectionProps {
   onCategorySelect?: (categoryName: string) => void;
+  products: Product[];
+  categories: Category[];
 }
 
 interface HeroSlide {
@@ -29,7 +31,7 @@ const categoryMeta: Record<string, { titleEn: string; titleSo: string; subtitleE
   girls: { titleEn: "Girls' Trainers", titleSo: "Kabaha Gabdhaha", subtitleEn: "Fun colors, comfy fit", subtitleSo: "Midab qurux badan, raaxo weyn" },
 };
 
-export function HeroSection({ onCategorySelect }: HeroSectionProps) {
+export function HeroSection({ onCategorySelect, products, categories }: HeroSectionProps) {
   const { language } = useLanguage();
   const [api, setApi] = useState<any>();
   const [current, setCurrent] = useState(0);
@@ -47,40 +49,21 @@ export function HeroSection({ onCategorySelect }: HeroSectionProps) {
 
   // Fetch enabled categories with in-stock products
   useEffect(() => {
-    const fetchSlides = async () => {
-      // Get enabled categories
-      const { data: categories } = await supabase
-        .from('categories')
-        .select('id, name, name_somali')
-        .eq('enabled', true);
-
-      if (!categories || categories.length === 0) return;
-
       const heroSlides: HeroSlide[] = [];
 
       for (const cat of categories) {
         const catKey = cat.name.toLowerCase().replace("'s", '').replace(' shoes', '').trim();
         
         // Get in-stock products for this category with images
-        const { data: products } = await supabase
-          .from('products')
-          .select('image_url')
-          .eq('category_id', cat.id)
-          .gt('stock', 0)
-          .not('image_url', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(6);
-
-        if (!products || products.length === 0) continue;
-
-        const images = products.map(p => p.image_url!).filter(Boolean);
+        const images = products.filter(p => p.category_id === cat.id && p.stock > 0)
+          .flatMap(p => p.image_url ? [p.image_url] : []).slice(0, 6);
         if (images.length === 0) continue;
 
         const meta = categoryMeta[catKey] || {
           titleEn: cat.name,
           titleSo: cat.name_somali,
-          subtitleEn: 'Premium quality footwear',
-          subtitleSo: 'Kabo tayo sare leh',
+          subtitleEn: 'Discover the latest collection',
+          subtitleSo: 'Soo hel ururinta cusub',
         };
 
         heroSlides.push({
@@ -91,20 +74,8 @@ export function HeroSection({ onCategorySelect }: HeroSectionProps) {
       }
 
       setSlides(heroSlides);
-    };
-
-    fetchSlides();
-
-    // Listen for category changes to update hero in real-time
-    const channel = supabase
-      .channel('hero-categories')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
-        fetchSlides();
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+      setActiveImageIndex({});
+  }, [products, categories]);
 
   // Rotate gallery images for each slide
   useEffect(() => {
@@ -172,11 +143,11 @@ export function HeroSection({ onCategorySelect }: HeroSectionProps) {
                           </span>
                         </div>
                         
-                        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+                        <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
                           <GradientText>
                             {language === 'so' ? slide.titleSo : slide.titleEn}
                           </GradientText>
-                        </h1>
+                        </h2>
                       </motion.div>
                       
                       <motion.p 
