@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Product } from '@/types/database';
-import { supabase } from '@/integrations/supabase/client';
+import { DepartmentKey } from '@/lib/departments';
+import { Button } from '@/components/ui/button';
 
 interface NewArrivalsShowcaseProps {
   onProductClick?: (product: Product) => void;
+  products: Product[];
+  department?: DepartmentKey;
 }
 
 interface ShowcaseItem {
@@ -16,34 +19,24 @@ interface ShowcaseItem {
   product: Product;
 }
 
-export function NewArrivalsShowcase({ onProductClick }: NewArrivalsShowcaseProps) {
+export function NewArrivalsShowcase({ onProductClick, products, department }: NewArrivalsShowcaseProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showcaseItems, setShowcaseItems] = useState<ShowcaseItem[]>([]);
   const { t } = useLanguage();
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const { data } = await supabase
-        .from('products')
-        .select('*, category:categories(*)')
-        .not('image_url', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(30);
-
-      if (data) {
-        const items: ShowcaseItem[] = (data as Product[])
-          .filter((p) => p.image_url)
-          .map((p) => ({
-            image: p.image_url!,
+        const items: ShowcaseItem[] = [...products]
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .filter(p => p.stock > 0)
+          .flatMap((p) => p.image_url ? [{
+            image: p.image_url,
             name: p.name,
-            tag: (p as any).category?.name || 'Shoes',
+            tag: p.category?.name || 'Collection',
             product: p,
-          }));
+          }] : []);
         setShowcaseItems(items);
-      }
-    };
-    fetchProducts();
-  }, []);
+        setActiveIndex(0);
+  }, [products]);
 
   if (showcaseItems.length === 0) return null;
 
@@ -78,23 +71,23 @@ export function NewArrivalsShowcase({ onProductClick }: NewArrivalsShowcaseProps
             Fresh Arrivals
           </h2>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Explore our latest collection of premium footwear
+            {department === 'cosmetics' ? 'Explore our latest beauty collection' : department ? 'Explore our latest collection of premium footwear' : 'Explore the latest from all our collections'}
           </p>
         </motion.div>
 
         <div className="relative flex items-center justify-center h-[420px] md:h-[480px]">
-          <button
+          <Button variant="outline" size="icon" aria-label="Previous arrival"
             onClick={prev}
             className="absolute left-2 md:left-8 z-20 w-10 h-10 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
+          </Button>
+          <Button variant="outline" size="icon" aria-label="Next arrival"
             onClick={next}
             className="absolute right-2 md:right-8 z-20 w-10 h-10 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
           >
             <ChevronRight className="w-5 h-5" />
-          </button>
+          </Button>
 
           <AnimatePresence mode="popLayout">
             {getVisibleItems().map((item) => {
@@ -115,35 +108,29 @@ export function NewArrivalsShowcase({ onProductClick }: NewArrivalsShowcaseProps
                     opacity: Math.max(opacity, 0.2),
                   }}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  onClick={() => {
-                    if (item.offset !== 0) {
-                      setActiveIndex(item.idx);
-                    } else if (onProductClick) {
-                      onProductClick(item.product);
-                    }
-                  }}
                   style={{ zIndex }}
                 >
                   <div className={`relative rounded-2xl overflow-hidden shadow-2xl transition-shadow ${isCenter ? 'ring-2 ring-primary/30' : ''}`}>
+                    <Button variant="ghost" aria-label={`View ${item.name}`} onClick={() => onProductClick?.(item.product)} className="block h-auto p-0 rounded-none hover:bg-transparent">
                     <img
                       src={item.image}
                       alt={item.name}
                       className="w-56 h-72 md:w-72 md:h-96 object-cover"
                       draggable={false}
                     />
+                    </Button>
                     {isCenter && (
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-5"
+                        className="pointer-events-none absolute bottom-0 inset-x-0 bg-background/90 p-5"
                       >
                         <span className="inline-block px-2.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium mb-2">
                           {item.tag}
                         </span>
-                        <h3 className="text-white font-display text-xl font-bold">
+                        <h3 className="text-foreground font-display text-xl font-bold">
                           {item.name}
                         </h3>
-                        <p className="text-white/70 text-sm mt-1">Tap to view details</p>
                       </motion.div>
                     )}
                   </div>
@@ -153,12 +140,12 @@ export function NewArrivalsShowcase({ onProductClick }: NewArrivalsShowcaseProps
           </AnimatePresence>
         </div>
 
-        <div className="flex justify-center gap-1.5 mt-6">
+        <div className="flex justify-center flex-wrap gap-1.5 mt-6">
           {showcaseItems.map((_, i) => (
-            <button
+            <Button variant="ghost" size="icon" aria-label={`Show arrival ${i + 1}`}
               key={i}
               onClick={() => setActiveIndex(i)}
-              className={`h-2 rounded-full transition-all ${
+              className={`h-2 p-0 rounded-full transition-all ${
                 i === activeIndex ? 'w-8 bg-primary' : 'w-2 bg-muted-foreground/30'
               }`}
             />
