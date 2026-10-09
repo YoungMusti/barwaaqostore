@@ -42,10 +42,14 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { ProductGridSkeleton } from '@/components/store/ProductCardSkeleton';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { DepartmentKey, departments, visibleCategories } from '@/lib/departments';
 
-export default function Index() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+export default function Index({ department }: { department?: DepartmentKey }) {
+  const [allProducts, setProducts] = useState<Product[]>([]);
+  const [allCategories, setCategories] = useState<Category[]>([]);
+  const categories = useMemo(() => visibleCategories(allCategories, department), [allCategories, department]);
+  const products = useMemo(() => allProducts.filter(product => categories.some(category => category.id === product.category_id)), [allProducts, categories]);
+  const page = departments.find(item => item.key === department);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSaleOnly, setShowSaleOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +64,7 @@ export default function Index() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [sortBy, setSortBy] = useState('default');
   
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { addItem: addToRecentlyViewed } = useRecentlyViewed();
 
   // Calculate price bounds
@@ -85,7 +89,21 @@ export default function Index() {
       setIsLoading(false);
     }
     fetchData();
-  }, []);
+    const channel = supabase.channel(`store-${department || 'home'}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchData)
+      .subscribe();
+    const refresh = () => { if (document.visibilityState === 'visible') fetchData(); };
+    document.addEventListener('visibilitychange', refresh);
+    return () => { void supabase.removeChannel(channel); document.removeEventListener('visibilitychange', refresh); };
+  }, [department]);
+
+  useEffect(() => {
+    setSelectedCategory(null);
+    setShowSaleOnly(false);
+    setVisibleCount(12);
+    window.scrollTo(0, 0);
+  }, [department]);
 
   // Calculate stock per category
   const categoryStockMap = categories.reduce((acc, cat) => {
@@ -182,6 +200,8 @@ export default function Index() {
   const resetFilters = () => {
     setPriceRange([priceBounds.min, priceBounds.max]);
     setSortBy('default');
+    setSelectedCategory(null);
+    setShowSaleOnly(false);
   };
 
   const saleCount = products.filter(p => p.is_on_sale).length;
@@ -205,12 +225,16 @@ export default function Index() {
       <LoadingBar isLoading={isLoading} />
       <AnnouncementBar />
       <SaleCountdownBanner />
-      <Header onProductClick={handleProductClick} />
-      <HeroSection onCategorySelect={handleHeroCategorySelect} />
+      <Header products={products} onProductClick={handleProductClick} />
+      <div className="container pt-7 pb-2">
+        <p className="text-xs font-medium text-primary mb-2">Barwaaqo Store</p>
+        <h1 className="font-display text-3xl font-bold text-foreground">{page ? (language === 'so' ? page.nameSo : page.name) : (language === 'so' ? 'Dhammaan Ururinta' : 'All Collections')}</h1>
+      </div>
+      <HeroSection products={products} categories={categories} onCategorySelect={handleHeroCategorySelect} />
       <TrustSignals />
       
       {/* New Arrivals Showcase */}
-      <NewArrivalsShowcase onProductClick={handleProductClick} />
+      <NewArrivalsShowcase products={products} department={department} onProductClick={handleProductClick} />
       
       <CategoryQuickLinks 
         categories={categories}
@@ -268,14 +292,14 @@ export default function Index() {
               <Package className="w-10 h-10 text-muted-foreground/40" />
             </div>
             <h3 className="font-display text-xl font-semibold mb-2 text-foreground">
-              {t('allProducts')}
+              {products.length === 0 ? (language === 'so' ? 'Alaab lama heli karo' : 'No products available yet') : t('allProducts')}
             </h3>
             <p className="text-muted-foreground text-sm mb-4">
-              Try adjusting your filters or browse all categories
+              {products.length === 0 ? (language === 'so' ? 'Dhawaan dib u soo eeg.' : 'Check back for new arrivals.') : 'Try adjusting your filters or browse all categories'}
             </p>
-            <Button variant="outline" onClick={resetFilters} className="rounded-full">
+            {products.length > 0 && <Button variant="outline" onClick={resetFilters} className="rounded-full">
               Reset Filters
-            </Button>
+            </Button>}
           </motion.div>
         ) : (
           <>
@@ -345,7 +369,7 @@ export default function Index() {
       {/* Delivery Info */}
       <DeliveryInfo />
 
-      <RecentlyViewedSection onProductClick={handleProductClick} />
+      <RecentlyViewedSection products={products} onProductClick={handleProductClick} />
       
       <Footer />
       <CartDrawer />

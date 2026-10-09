@@ -8,9 +8,10 @@ import { VoiceSearch } from './VoiceSearch';
 
 interface SearchBarProps {
   onProductClick: (product: Product) => void;
+  products?: Product[];
 }
 
-export function SearchBar({ onProductClick }: SearchBarProps) {
+export function SearchBar({ onProductClick, products }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -36,6 +37,11 @@ export function SearchBar({ onProductClick }: SearchBarProps) {
       }
 
       setIsLoading(true);
+      if (products) {
+        setResults(products.filter(product => product.name.toLowerCase().includes(query.toLowerCase())).slice(0, 5));
+        setIsLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from('products')
         .select('*')
@@ -48,7 +54,7 @@ export function SearchBar({ onProductClick }: SearchBarProps) {
 
     const debounce = setTimeout(search, 300);
     return () => clearTimeout(debounce);
-  }, [query]);
+  }, [query, products]);
 
   const handleSelect = (product: Product) => {
     onProductClick(product);

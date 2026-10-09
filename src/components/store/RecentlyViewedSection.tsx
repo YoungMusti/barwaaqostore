@@ -4,10 +4,12 @@ import { Product } from '@/types/database';
 
 interface RecentlyViewedSectionProps {
   onProductClick: (product: Product) => void;
+  products?: Product[];
 }
 
-export function RecentlyViewedSection({ onProductClick }: RecentlyViewedSectionProps) {
-  const { items } = useRecentlyViewed();
+export function RecentlyViewedSection({ onProductClick, products }: RecentlyViewedSectionProps) {
+  const { items: recentItems } = useRecentlyViewed();
+  const items = products ? recentItems.filter(item => products.some(product => product.id === item.id)) : recentItems;
   const { language } = useLanguage();
 
   if (items.length === 0) return null;
