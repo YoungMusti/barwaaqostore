@@ -226,10 +226,32 @@ export default function Index({ department }: { department?: DepartmentKey }) {
       <AnnouncementBar />
       <SaleCountdownBanner />
       <Header products={products} onProductClick={handleProductClick} />
-      <div className="container pt-7 pb-2">
-        <p className="text-xs font-medium text-primary mb-2">Barwaaqo Store</p>
-        <h1 className="font-display text-3xl font-bold text-foreground">{page ? (language === 'so' ? page.nameSo : page.name) : (language === 'so' ? 'Dhammaan Ururinta' : 'All Collections')}</h1>
-      </div>
+      <section className="container pt-6 pb-3">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-secondary/60 to-accent/10 px-6 py-6 sm:px-8 sm:py-8"
+        >
+          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/15 blur-3xl" aria-hidden />
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-2">Barwaaqo Store</p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
+            {page ? (language === 'so' ? page.nameSo : page.name) : (language === 'so' ? 'Dhammaan Ururinta' : 'All Collections')}
+          </h1>
+          <p className="mt-2 max-w-xl text-sm sm:text-base text-muted-foreground">
+            {department === 'men' && (language === 'so' ? 'Kabo raaxo leh oo ragga ah, qiimo jaban.' : 'Comfortable, stylish trainers for every day — at prices you’ll love.')}
+            {department === 'women' && (language === 'so' ? 'Kabo qurux badan oo dumarka ah.' : 'Elegant flats, heels and trainers picked for you.')}
+            {department === 'cosmetics' && (language === 'so' ? 'Qurxin iyo daryeel maqaar tayo leh.' : 'Makeup, skincare and fragrance to feel your best.')}
+            {!department && (language === 'so' ? 'Kabaha ragga, dumarka iyo qurxinta — hal meel.' : 'Men’s shoes, women’s shoes and cosmetics — all in one place.')}
+          </p>
+          {!isLoading && (
+            <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-background/80 px-3 py-1 text-xs font-medium text-foreground">
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              {products.length} {language === 'so' ? 'alaab' : products.length === 1 ? 'product' : 'products'}
+            </span>
+          )}
+        </motion.div>
+      </section>
       <HeroSection products={products} categories={categories} onCategorySelect={handleHeroCategorySelect} />
       <TrustSignals />
       
