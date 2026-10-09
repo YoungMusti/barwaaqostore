@@ -6,6 +6,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Link } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
+import { DepartmentNav } from './DepartmentNav';
 import { ThemeToggle } from './ThemeToggle';
 import { CurrencyToggle } from './CurrencyToggle';
 import { OrderLookup } from './OrderLookup';
@@ -16,9 +17,10 @@ import barwaaqoLogo from '@/assets/barwaaqo-logo.png';
 
 interface HeaderProps {
   onProductClick?: (product: Product) => void;
+  products?: Product[];
 }
 
-export function Header({ onProductClick }: HeaderProps) {
+export function Header({ onProductClick, products }: HeaderProps) {
   const { totalItems, setIsOpen } = useCart();
   const { items: wishlistItems } = useWishlist();
   const { language, setLanguage, t } = useLanguage();
@@ -58,7 +60,7 @@ export function Header({ onProductClick }: HeaderProps) {
 
         {/* Search Bar - Hidden on mobile */}
         <div className="hidden md:block flex-1 max-w-xs">
-          <SearchBar onProductClick={(product) => onProductClick?.(product)} />
+          <SearchBar products={products} onProductClick={(product) => onProductClick?.(product)} />
         </div>
 
         {/* Right actions */}
@@ -179,9 +181,10 @@ export function Header({ onProductClick }: HeaderProps) {
       
       {/* Mobile Search Bar */}
       <div className="md:hidden px-4 pb-3">
-        <SearchBar onProductClick={(product) => onProductClick?.(product)} />
+        <SearchBar products={products} onProductClick={(product) => onProductClick?.(product)} />
       </div>
 
+      <DepartmentNav />
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
