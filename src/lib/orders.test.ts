@@ -1,3 +1,4 @@
+// @ts-nocheck -- run with bun test
 import { describe, test, expect } from 'bun:test';
 import { formatOrderNumber, orderCost, validateCheckoutDetails, orderMatchesSearch, duplicateReferenceOrders } from './orders';
 
