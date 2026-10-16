@@ -7,7 +7,8 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCurrency } from './CurrencyToggle';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingBag, ChevronLeft, ChevronRight, Package, Loader2, Heart, Ruler, Share2, Copy, Check } from 'lucide-react';
+import { ShoppingBag, ChevronLeft, ChevronRight, Package, Loader2, Heart, Ruler, Share2, Copy, Check, MessageCircle } from 'lucide-react';
+import { whatsappOrderLink } from '@/lib/insights';
 import { cn } from '@/lib/utils';
 import { SizeGuideModal } from './SizeGuideModal';
 import { ProductReviews } from './ProductReviews';
@@ -23,10 +24,11 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
   const { addItem } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { t, language } = useLanguage();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency, rate } = useCurrency();
   const [images, setImages] = useState<ProductImage[]>([]);
   const [colors, setColors] = useState<ProductColor[]>([]);
   const [sizes, setSizes] = useState<ProductSize[]>([]);
+  const [bundle, setBundle] = useState<Product[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -45,10 +47,16 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
         supabase.from('product_images').select('*').eq('product_id', product.id).order('display_order'),
         supabase.from('product_colors').select('*').eq('product_id', product.id),
         supabase.from('product_sizes').select('*').eq('product_id', product.id).order('eu_size'),
-      ]).then(([imagesRes, colorsRes, sizesRes]) => {
+        supabase.from('products').select('*').gt('stock', 0).neq('id', product.id).limit(40),
+      ]).then(([imagesRes, colorsRes, sizesRes, otherRes]) => {
         setImages(imagesRes.data || []);
         setColors(colorsRes.data || []);
         setSizes(sizesRes.data || []);
+        const others = (otherRes.data || []) as Product[];
+        // Pair with something from a different collection first (e.g. shoes + cosmetics), then same collection
+        const diff = others.filter(p => p.category_id !== product.category_id);
+        const pool = [...diff.sort(() => Math.random() - 0.5), ...others.filter(p => p.category_id === product.category_id)];
+        setBundle(pool.slice(0, 2));
         if (colorsRes.data?.length) setSelectedColor(colorsRes.data[0].name);
         if (sizesRes.data?.length) setSelectedSize(`${sizesRes.data[0].eu_size}/${sizesRes.data[0].us_size}`);
         setIsLoading(false);
@@ -57,6 +65,7 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
   }, [product, open]);
 
   if (!product) return null;
+  const productUrl = `${window.location.origin}/product/${product.id}`;
 
   const isOnSale = product.is_on_sale && product.sale_price !== null;
   const displayPrice = isOnSale ? product.sale_price! : product.price;
@@ -191,6 +200,9 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
                     </>
                   )}
                 </div>
+                <p className="-mt-3 mb-4 text-sm text-muted-foreground">
+                  {currency === 'USD' ? `≈ Sh${Math.round(displayPrice * rate).toLocaleString('en')} SOS` : `≈ $${displayPrice.toFixed(2)} USD`}
+                </p>
                 
                 {/* Colors */}
                 {colors.length > 0 && (
@@ -285,17 +297,50 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
                     variant="outline"
                     size="icon"
                     className="h-12 w-12 rounded-xl"
+                    title="Copy link"
                     onClick={() => {
-                      const url = window.location.origin + '/?product=' + product.id;
-                      navigator.clipboard.writeText(`${product.name} - ${formatPrice(displayPrice)} ${url}`);
+                      navigator.clipboard.writeText(productUrl);
                       setCopied(true);
                       toast.success(language === 'so' ? 'La koobiyey!' : 'Link copied!');
                       setTimeout(() => setCopied(false), 2000);
                     }}
                   >
-                    {copied ? <Check className="w-5 h-5 text-success" /> : <Share2 className="w-5 h-5" />}
+                    {copied ? <Check className="w-5 h-5 text-success" /> : <Copy className="w-5 h-5" />}
                   </Button>
                 </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <Button asChild variant="secondary" className="h-11 rounded-xl gap-2">
+                    <a href={whatsappOrderLink(product.name, formatPrice(displayPrice), productUrl, selectedSize)} target="_blank" rel="noreferrer">
+                      <MessageCircle className="w-4 h-4" />{language === 'so' ? 'Ku dalbo WhatsApp' : 'Order on WhatsApp'}
+                    </a>
+                  </Button>
+                  <Button asChild variant="outline" className="h-11 rounded-xl gap-2">
+                    <a href={`https://wa.me/?text=${encodeURIComponent(`${product.name} — ${formatPrice(displayPrice)}\n${productUrl}`)}`} target="_blank" rel="noreferrer">
+                      <Share2 className="w-4 h-4" />{language === 'so' ? 'La wadaag' : 'Share'}
+                    </a>
+                  </Button>
+                </div>
+
+                {bundle.length > 0 && (
+                  <div className="mt-6 rounded-2xl border p-4">
+                    <h4 className="font-semibold mb-3">{language === 'so' ? 'Dhammaystir muuqaalka' : 'Complete the look'}</h4>
+                    <div className="flex gap-2 mb-3">
+                      {[product, ...bundle].map(p => (
+                        <div key={p.id} className="flex-1 text-center">
+                          <img src={p.image_url || ''} alt={p.name} className="w-full aspect-square object-cover rounded-lg bg-secondary" />
+                          <div className="text-xs mt-1 truncate">{p.name}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <Button variant="outline" className="w-full rounded-xl" onClick={() => {
+                      [product, ...bundle].forEach(p => addItem(p, 1, p.id === product.id ? selectedSize : null, p.id === product.id ? selectedColor : null));
+                      toast.success(language === 'so' ? 'Dhammaan waa lagu daray' : 'All added to cart');
+                    }}>
+                      {language === 'so' ? 'Ku dar dhammaan' : 'Add all'} — {formatPrice([product, ...bundle].reduce((s, p) => s + (p.is_on_sale && p.sale_price ? p.sale_price : p.price), 0))}
+                    </Button>
+                  </div>
+                )}
                 
                 {/* Reviews Section */}
                 <ProductReviews productId={product.id} />
