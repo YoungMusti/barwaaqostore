@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category, Order, OrderItem } from '@/types/database';
 import { AdminOrders } from '@/components/admin/AdminOrders';
+import { AdminInsights } from '@/components/admin/AdminInsights';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -22,7 +23,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'categories' | 'users' | 'analytics' | 'flash-sale'>('products');
+  const [activeTab, setActiveTab] = useState<'insights' | 'products' | 'orders' | 'categories' | 'users' | 'analytics' | 'flash-sale'>('insights');
   const [isLoading, setIsLoading] = useState(true);
   const [productDialog, setProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -357,6 +358,7 @@ export default function AdminDashboard() {
       <div className="container py-6">
         <div className="flex gap-2 mb-6 flex-wrap">
           {[
+            { key: 'insights', icon: TrendingUp, label: 'Today & Stock' },
             { key: 'analytics', icon: BarChart3, label: 'Analytics' },
             { key: 'products', icon: Package, label: 'Products' },
             { key: 'orders', icon: ShoppingCart, label: 'Orders' },
@@ -371,6 +373,7 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {activeTab === 'insights' && <AdminInsights />}
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">

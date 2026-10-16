@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Search, Copy, AlertTriangle, Download, Package } from 'lucide-react';
+import { Search, Copy, AlertTriangle, Download, Package, Printer } from 'lucide-react';
+import { printDeliverySlip } from '@/lib/printSlip';
 import { PAYMENT_STATUSES, FULFILMENT_STATUSES, PAYMENT_METHOD_LABELS, PaymentStatus, FulfilmentStatus, orderMatchesSearch, duplicateReferenceOrders } from '@/lib/orders';
 
 type AdminOrder = Record<string, any> & {
@@ -184,6 +185,9 @@ export function AdminOrders() {
                   <button onClick={() => copy(open.order_number)} className="font-mono text-xl text-primary flex items-center gap-2">
                     {open.order_number} <Copy className="w-4 h-4" />
                   </button>
+                  <Button size="sm" variant="outline" className="ml-auto mr-6 gap-1" onClick={() => printDeliverySlip(open)}>
+                    <Printer className="w-4 h-4" /> Print slip
+                  </Button>
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-3">
