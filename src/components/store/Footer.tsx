@@ -38,14 +38,9 @@ export function Footer() {
       whileInView="visible"
       viewport={{ once: true }}
       variants={containerVariants}
-      className="relative overflow-hidden py-12 mt-12"
-      style={{
-        background: 'linear-gradient(135deg, hsl(220 25% 10%) 0%, hsl(225 30% 15%) 50%, hsl(15 30% 18%) 100%)'
-      }}
+      className="relative overflow-hidden py-12 mt-12 mx-3 md:mx-6 mb-20 md:mb-6 rounded-3xl"
+      style={{ background: 'var(--gradient-footer)' }}
     >
-      {/* Decorative gradient orbs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-[100px]" />
-      <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full bg-accent/10 blur-[80px]" />
       
       <div className="container relative">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
