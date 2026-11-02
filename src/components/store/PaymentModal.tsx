@@ -90,7 +90,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const optionalPhone = (v: string) => (v.trim() === '+252' ? null : v.trim() || null);
 
   const validateReview = () => {
-    const e = validateCheckoutDetails({ fullName, phone, deliveryMethod, city, area, directions, altPhone: optionalPhone(altPhone) || '' });
+    const e = validateCheckoutDetails({ fullName, phone, deliveryMethod, city: effectiveCity, area, directions, altPhone: optionalPhone(altPhone) || '' });
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -109,7 +109,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
         _customer_name: fullName.trim(),
         _customer_phone: phone.trim(),
         _delivery_method: deliveryMethod,
-        _delivery_city: deliveryMethod === 'delivery' ? city.trim() : null,
+        _delivery_city: deliveryMethod === 'delivery' ? effectiveCity.trim() : null,
         _delivery_area: deliveryMethod === 'delivery' ? area.trim() : null,
         _delivery_directions: deliveryMethod === 'delivery' ? directions.trim() : null,
         _alt_phone: optionalPhone(altPhone),
@@ -138,7 +138,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
         items: [...items],
         paymentMethod,
         paymentStatus: reference.trim() || paymentDate.trim() ? 'verification_pending' : 'awaiting_payment',
-        deliveryMethod, city, area, directions,
+        deliveryMethod, city: effectiveCity, area, directions, quoteNeeded,
         reference: reference.trim(), paymentDate: paymentDate.trim(),
       });
       clearCart();
@@ -155,7 +155,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
     onOpenChange(false);
     setStep('review');
     setFullName(''); setPhone('+252'); setAltPhone('+252');
-    setDeliveryMethod('collection'); setCity(''); setArea(''); setDirections(''); setInstructions('');
+    setDeliveryMethod('collection'); setZone('mogadishu'); setCity(''); setArea(''); setDirections(''); setInstructions('');
     setPaymentMethod('EVC'); setReference(''); setPaymentDate(''); setPayerPhone('+252'); setNote('');
     setErrors({}); setPlaced(null);
   };
@@ -168,12 +168,12 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
     <div className="border-t pt-3 space-y-1">
       <div className="flex justify-between text-sm"><span className="text-muted-foreground">Item subtotal</span><span>${cost.subtotal.toFixed(2)}</span></div>
       {deliveryMethod === 'delivery' && (
-        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Delivery fee</span><span>+${DELIVERY_FEE.toFixed(2)}</span></div>
+        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Delivery fee</span><span>{quoteNeeded ? 'Quote to follow' : `+$${DELIVERY_FEE.toFixed(2)}`}</span></div>
       )}
       {cost.discount > 0 && (
         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Discount</span><span>-${cost.discount.toFixed(2)}</span></div>
       )}
-      <div className="flex justify-between text-lg font-bold pt-1"><span>Total payable</span><span>${(total ?? cost.total).toFixed(2)}</span></div>
+      <div className="flex justify-between text-lg font-bold pt-1"><span>{quoteNeeded ? 'Total (items only)' : 'Total payable'}</span><span>${(total ?? cost.total).toFixed(2)}</span></div>
     </div>
   );
 
@@ -228,6 +228,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
             {placed.deliveryMethod === 'delivery' ? (
               <div className="rounded-xl border p-3 text-sm space-y-1">
                 <p className="font-medium flex items-center gap-2"><Truck className="w-4 h-4" /> Delivery to {placed.city}, {placed.area}</p>
+                {placed.quoteNeeded && <p className="text-warning">We'll send you a delivery quote on WhatsApp before dispatch.</p>}
                 <p className="text-muted-foreground whitespace-pre-line">{placed.directions}</p>
               </div>
             ) : (
@@ -292,7 +293,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                       className={`p-3 rounded-xl border-2 text-center transition-all ${deliveryMethod === m ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}>
                       {m === 'collection' ? <Store className="w-5 h-5 mx-auto mb-1" /> : <Truck className="w-5 h-5 mx-auto mb-1" />}
                       <p className="text-sm font-medium">{m === 'collection' ? 'Collection' : 'Delivery'}</p>
-                      <p className="text-xs text-muted-foreground">{m === 'collection' ? 'Free' : `+$${DELIVERY_FEE.toFixed(2)}`}</p>
+                      <p className="text-xs text-muted-foreground">{m === 'collection' ? 'Free' : `Mogadishu +$${DELIVERY_FEE.toFixed(2)}`}</p>
                     </button>
                   ))}
                 </div>
@@ -300,12 +301,27 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
 
               {deliveryMethod === 'delivery' && (
                 <div className="space-y-3 rounded-xl bg-secondary/40 p-3">
+                  <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Delivery area">
+                    {(['mogadishu', 'other'] as const).map(z => (
+                      <button key={z} type="button" role="radio" aria-checked={zone === z} onClick={() => { setZone(z); clearError('city'); }}
+                        className={`p-2 rounded-lg border-2 text-sm transition-all ${zone === z ? 'border-primary bg-primary/5 font-medium' : 'border-muted'}`}>
+                        {z === 'mogadishu' ? `Mogadishu · $${DELIVERY_FEE.toFixed(2)}` : 'Other city · get a quote'}
+                      </button>
+                    ))}
+                  </div>
+                  {zone === 'other' && (
+                    <p className="text-xs text-muted-foreground rounded-lg bg-background p-2">
+                      Outside Mogadishu the delivery price depends on distance. Place your order and we'll message you a delivery quote on WhatsApp before sending it. You only pay for the items now.
+                    </p>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Field id="city" label="City" icon={Building2} required error={errors.city}>
-                      <Input id="city" placeholder="e.g. Mogadishu" value={city} maxLength={80}
+                    {zone === 'other' ? (
+                    <Field id="city" label="City / Town" icon={Building2} required error={errors.city}>
+                      <Input id="city" placeholder="e.g. Hargeisa, Baidoa, Kismayo" value={city} maxLength={80}
                         onChange={e => { setCity(e.target.value); clearError('city'); }}
                         className={`h-11 rounded-xl ${errors.city ? 'border-destructive' : ''}`} />
                     </Field>
+                    ) : null}
                     <Field id="area" label="Area / District" icon={MapPin} required error={errors.area}>
                       <Input id="area" placeholder="e.g. Hodan" value={area} maxLength={120}
                         onChange={e => { setArea(e.target.value); clearError('area'); }}
