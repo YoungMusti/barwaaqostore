@@ -28,8 +28,17 @@ export function formatOrderNumber(n: number) {
   return 'BARWAAQO' + (n < 10 ? '0' + n : String(n));
 }
 
-export function orderCost(subtotal: number, deliveryMethod: 'collection' | 'delivery', discount = 0) {
-  const delivery = deliveryMethod === 'delivery' ? DELIVERY_FEE : 0;
+/** Fixed delivery fee applies only inside Mogadishu; elsewhere the shop sends a quote. Mirrors create_order_v2. */
+export function isMogadishu(city: string) {
+  return ['mogadishu', 'muqdisho'].includes(city.trim().toLowerCase());
+}
+
+export function needsDeliveryQuote(deliveryMethod: 'collection' | 'delivery', city: string) {
+  return deliveryMethod === 'delivery' && !isMogadishu(city);
+}
+
+export function orderCost(subtotal: number, deliveryMethod: 'collection' | 'delivery', discount = 0, city = 'Mogadishu') {
+  const delivery = deliveryMethod === 'delivery' && isMogadishu(city) ? DELIVERY_FEE : 0;
   return { subtotal, delivery, discount, total: Math.max(0, subtotal + delivery - discount) };
 }
 

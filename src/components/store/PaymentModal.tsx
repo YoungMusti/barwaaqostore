@@ -76,7 +76,10 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
 
-  const cost = orderCost(totalAmount, deliveryMethod);
+  const [zone, setZone] = useState<'mogadishu' | 'other'>('mogadishu');
+  const effectiveCity = zone === 'mogadishu' ? 'Mogadishu' : city;
+  const cost = orderCost(totalAmount, deliveryMethod, 0, effectiveCity);
+  const quoteNeeded = needsDeliveryQuote(deliveryMethod, effectiveCity);
   const evcDialCode = `*712*${EVC_BUSINESS_NUMBER}*${Math.round(cost.total)}#`;
   const clearError = (k: string) => errors[k] && setErrors(p => { const n = { ...p }; delete n[k]; return n; });
 
