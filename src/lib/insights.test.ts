@@ -1,3 +1,4 @@
+// @ts-nocheck -- run with bun test
 import { describe, it, expect } from 'bun:test';
 import { adjustPrice, buildCustomers, dailySummary } from './insights';
 
