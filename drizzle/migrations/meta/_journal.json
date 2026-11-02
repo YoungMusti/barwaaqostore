@@ -8,6 +8,13 @@
       "when": 1791790607492,
       "tag": "0000_order_numbers_delivery_payment_verification",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793625651927,
+      "tag": "0001_mogadishu_delivery_quotes",
+      "breakpoints": true
     }
   ]
 }
