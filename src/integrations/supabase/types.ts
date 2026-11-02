@@ -198,6 +198,7 @@ export type Database = {
           delivery_fee: number
           delivery_instructions: string | null
           delivery_method: string
+          delivery_quote_status: string | null
           discount_amount: number
           fulfilment_status: string
           id: string
@@ -227,6 +228,7 @@ export type Database = {
           delivery_fee?: number
           delivery_instructions?: string | null
           delivery_method?: string
+          delivery_quote_status?: string | null
           discount_amount?: number
           fulfilment_status?: string
           id?: string
@@ -256,6 +258,7 @@ export type Database = {
           delivery_fee?: number
           delivery_instructions?: string | null
           delivery_method?: string
+          delivery_quote_status?: string | null
           discount_amount?: number
           fulfilment_status?: string
           id?: string
@@ -503,6 +506,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_delivery_quote: {
+        Args: { _fee: number; _order_id: string }
+        Returns: {
+          message: string
+          ok: boolean
+        }[]
+      }
       admin_set_fulfilment_status: {
         Args: { _new_status: string; _note?: string; _order_id: string }
         Returns: {
