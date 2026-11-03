@@ -208,7 +208,21 @@ export function AdminOrders() {
                     ))}
                   </div>
                   <Row label="Subtotal" value={money(open.subtotal_amount)} />
-                  <Row label="Delivery fee" value={money(open.delivery_fee)} />
+                  <Row label="Delivery fee" value={(open as any).delivery_quote_status === 'pending' ? <span className="text-warning font-medium">Quote needed</span> : money(open.delivery_fee)} />
+                  {(open as any).delivery_quote_status && (
+                    <form className="flex gap-2 items-center pt-1" onSubmit={async e => {
+                      e.preventDefault();
+                      const fee = Number(new FormData(e.currentTarget).get('fee'));
+                      const { data, error } = await supabase.rpc('admin_set_delivery_quote', { _order_id: open.id, _fee: fee });
+                      const r = data?.[0];
+                      if (error || !r?.ok) { toast.error(r?.message || 'Could not save quote'); return; }
+                      toast.success(r.message); await load(); loadHistory(open.id);
+                    }}>
+                      <input name="fee" type="number" min="0" step="0.5" required aria-label="Delivery quote in dollars" placeholder="Quote $"
+                        className="h-9 w-28 rounded-md border bg-background px-2 text-sm" />
+                      <button type="submit" className="h-9 rounded-md bg-primary px-3 text-sm text-primary-foreground">Save quote</button>
+                    </form>
+                  )}
                   {Number(open.discount_amount) > 0 && <Row label="Discount" value={`-${money(open.discount_amount)}`} />}
                   <Row label="Total" value={<b>{money(open.total_amount)}</b>} />
                 </Section>
