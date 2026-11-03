@@ -1,5 +1,11 @@
 # Store pages
-- [x] Add Home showing all collections plus Men, Women, and Cosmetics pages and navigation.
-- [x] Scope galleries and listings to each department, respecting enabled categories.
-- [x] Add Cosmetics to admin categories without inventing products.
-- [x] Verify pages and product opening.
+- [x] Home + Men, Women, Cosmetics pages.
+
+# Delivery
+- [x] $2 delivery only in Mogadishu; other cities request a quote; admin sets quote.
+
+# Next (user said "add it all")
+- [ ] Own link per product (share links currently don't open product)
+- [ ] Size + in-stock filters
+- [ ] Somali language switch, notify-me, Coming Soon pre-orders, photo reviews
+- [ ] Admin: dealer PDF import, WhatsApp quick replies, profit view, staff accounts

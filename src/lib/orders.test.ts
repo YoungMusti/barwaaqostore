@@ -1,6 +1,6 @@
 // @ts-nocheck -- run with bun test
 import { describe, test, expect } from 'bun:test';
-import { formatOrderNumber, orderCost, validateCheckoutDetails, orderMatchesSearch, duplicateReferenceOrders } from './orders';
+import { needsDeliveryQuote, formatOrderNumber, orderCost, validateCheckoutDetails, orderMatchesSearch, duplicateReferenceOrders } from './orders';
 
 const base = { fullName: 'Amina', phone: '+252612345678', deliveryMethod: 'delivery' as const, city: '', area: '', directions: '', altPhone: '' };
 
@@ -44,5 +44,14 @@ describe('admin search', () => {
     const b = { id: '2', payment_transaction_ref: ' tx123 ' };
     const c = { id: '3', payment_transaction_ref: 'TX999' };
     expect(duplicateReferenceOrders(a, [a, b, c]).map(x => x.id)).toEqual(['2']);
+  });
+});
+
+describe('delivery zones', () => {
+  test('Mogadishu delivery costs $2', () => { expect(orderCost(10, 'delivery', 0, 'Mogadishu').total).toBe(12); });
+  test('other cities pay items only and need a quote', () => {
+    expect(orderCost(10, 'delivery', 0, 'Hargeisa').total).toBe(10);
+    expect(needsDeliveryQuote('delivery', 'Hargeisa')).toBe(true);
+    expect(needsDeliveryQuote('delivery', 'muqdisho')).toBe(false);
   });
 });
