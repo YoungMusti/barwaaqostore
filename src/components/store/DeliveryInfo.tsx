@@ -5,17 +5,17 @@ import { Truck, Clock, MapPin, Shield } from 'lucide-react';
 const deliveryFeatures = [
   {
     icon: Truck,
-    titleEn: 'Same Day Delivery',
-    titleSo: 'Gaadiid Maalinta',
-    descEn: 'Free delivery within Mogadishu for orders over $30',
-    descSo: 'Gaadiid bilaash ah Muqdisho dhexdeeda dalabyo ka badan $30',
+    titleEn: 'Mogadishu Delivery',
+    titleSo: 'Gaadiid Muqdisho',
+    descEn: '$2 delivery anywhere in Mogadishu',
+    descSo: '$2 gaadiid Muqdisho oo dhan',
   },
   {
     icon: Clock,
-    titleEn: '2-5 Day Shipping',
-    titleSo: '2-5 Maalmood',
-    descEn: 'Nationwide delivery across Somalia',
-    descSo: 'Gaadiid dalka oo dhan',
+    titleEn: 'Other Cities on Request',
+    titleSo: 'Magaalooyinka Kale',
+    descEn: 'Outside Mogadishu we send you a delivery quote first',
+    descSo: 'Muqdisho dibaddeeda, qiimaha gaadiidka ayaan kuu soo dirnaa',
   },
   {
     icon: MapPin,
