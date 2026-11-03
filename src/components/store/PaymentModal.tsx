@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CheckCircle, Phone, Receipt, Loader2, User, MapPin, Truck, Store, ShoppingBag, Clock, Copy, Building2, Navigation } from 'lucide-react';
-import { DELIVERY_FEE, orderCost, validateCheckoutDetails, PAYMENT_STATUSES, FULFILMENT_STATUSES, PAYMENT_METHOD_LABELS, PaymentStatus } from '@/lib/orders';
+import { DELIVERY_FEE, orderCost, needsDeliveryQuote, validateCheckoutDetails, PAYMENT_STATUSES, FULFILMENT_STATUSES, PAYMENT_METHOD_LABELS, PaymentStatus } from '@/lib/orders';
 import type { CartItem } from '@/types/database';
 
 interface PaymentModalProps {
@@ -36,6 +36,7 @@ interface PlacedOrder {
   directions: string;
   reference: string;
   paymentDate: string;
+  quoteNeeded?: boolean;
 }
 
 function Field({ id, label, icon: Icon, required, optional, error, hint, children }: {
