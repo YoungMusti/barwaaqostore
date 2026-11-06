@@ -14,6 +14,11 @@ interface AdvancedFiltersProps {
   sortBy: string;
   onSortChange: (sort: string) => void;
   onReset: () => void;
+  sizes?: string[];
+  selectedSize?: string | null;
+  onSizeChange?: (size: string | null) => void;
+  inStockOnly?: boolean;
+  onInStockChange?: (v: boolean) => void;
 }
 
 export function AdvancedFilters({
@@ -24,6 +29,11 @@ export function AdvancedFilters({
   sortBy,
   onSortChange,
   onReset,
+  sizes = [],
+  selectedSize = null,
+  onSizeChange,
+  inStockOnly = false,
+  onInStockChange,
 }: AdvancedFiltersProps) {
   const { language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
@@ -39,7 +49,9 @@ export function AdvancedFilters({
   const hasActiveFilters = 
     priceRange[0] !== minPrice || 
     priceRange[1] !== maxPrice || 
-    sortBy !== 'default';
+    sortBy !== 'default' ||
+    !!selectedSize ||
+    inStockOnly;
 
   return (
     <div className="mb-6">
@@ -134,6 +146,37 @@ export function AdvancedFilters({
                   </div>
                 </div>
               </div>
+
+              {sizes.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="font-semibold mb-3">{language === 'so' ? 'Cabbir (EU)' : 'Size (EU)'}</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {sizes.map(size => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => onSizeChange?.(selectedSize === size ? null : size)}
+                        className={cn(
+                          "min-w-11 px-3 py-1.5 rounded-full border text-sm transition-colors",
+                          selectedSize === size ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary"
+                        )}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <label className="mt-6 flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(e) => onInStockChange?.(e.target.checked)}
+                  className="w-4 h-4 accent-primary"
+                />
+                <span className="text-sm font-medium">{language === 'so' ? 'Kaliya kuwa diyaar ah' : 'In stock only'}</span>
+              </label>
             </div>
           </motion.div>
         )}
