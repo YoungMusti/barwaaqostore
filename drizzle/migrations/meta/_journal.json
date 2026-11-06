@@ -15,6 +15,13 @@
       "when": 1793625651927,
       "tag": "0001_mogadishu_delivery_quotes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793960359664,
+      "tag": "0002_add_storefront_display_settings",
+      "breakpoints": true
     }
   ]
 }

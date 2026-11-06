@@ -5,10 +5,8 @@ import { useCart } from '@/hooks/useCart';
 import { useCurrency } from './CurrencyToggle';
 import { Package, Heart, AlertTriangle, ShoppingBag } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { StarRating } from './ProductReviews';
 import { ProductBadge, getProductBadgeType } from './ProductBadges';
 import { motion } from 'framer-motion';
-import { useState, useRef } from 'react';
 
 interface ProductCardProps {
   product: Product;
@@ -21,9 +19,6 @@ export function ProductCard({ product, index = 0, onClick }: ProductCardProps) {
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { addItem } = useCart();
   const { formatPrice } = useCurrency();
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
 
   const isInStock = product.stock > 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
@@ -32,213 +27,91 @@ export function ProductCard({ product, index = 0, onClick }: ProductCardProps) {
   const inWishlist = isInWishlist(product.id);
   const badgeType = getProductBadgeType(product);
 
-  // Mock rating (would come from database in production)
-  const mockRating = Math.floor(Math.random() * 2) + 4; // 4 or 5 stars
-
-  const handleQuickAdd = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isInStock) {
-      addItem(product);
-    }
-  };
-
-  const handleWishlistClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toggleWishlist(product);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    
-    const rect = cardRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    
-    const mouseX = e.clientX - centerX;
-    const mouseY = e.clientY - centerY;
-    
-    // Calculate rotation (max 15 degrees)
-    const rotateXValue = (mouseY / (rect.height / 2)) * -8;
-    const rotateYValue = (mouseX / (rect.width / 2)) * 8;
-    
-    setRotateX(rotateXValue);
-    setRotateY(rotateYValue);
-  };
-
-  const handleMouseLeave = () => {
-    setRotateX(0);
-    setRotateY(0);
-  };
-
   return (
-    <motion.div
-      ref={cardRef}
+    <motion.article
       onClick={onClick}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ 
-        duration: 0.4, 
-        delay: index * 0.05,
-        ease: 'easeOut'
-      }}
-      style={{
-        rotateX,
-        rotateY,
-        transformStyle: 'preserve-3d',
-        perspective: 1000,
-      }}
-      whileHover={{ 
-        scale: 1.02,
-        transition: { duration: 0.2 }
-      }}
-      className="group bg-card rounded-2xl overflow-hidden border border-border/60 hover:border-primary/30 transition-all duration-300 hover:shadow-xl cursor-pointer will-change-transform gradient-card"
+      transition={{ duration: 0.25, delay: Math.min(index, 8) * 0.025 }}
+      whileHover={{ y: -2 }}
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors hover:border-primary/30 hover:shadow-md"
     >
-      {/* Image */}
-      <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-secondary/80 via-muted/50 to-primary/5">
+      <div className="relative aspect-square overflow-hidden bg-secondary/60">
         {product.image_url ? (
-          <motion.img
+          <img
             src={product.image_url}
             alt={product.name}
-            className="w-full h-full object-cover"
-            style={{ transform: 'translateZ(20px)' }}
-            whileHover={{ scale: 1.08 }}
-            transition={{ duration: 0.4 }}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-16 h-16 text-muted-foreground/30" />
+          <div className="flex h-full w-full items-center justify-center">
+            <Package className="h-10 w-10 text-muted-foreground/30" />
           </div>
         )}
-        
-        {/* Sale badge with discount % */}
+
         {isOnSale && (
-          <motion.div 
-            className="absolute top-3 left-3 flex gap-1.5"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-          >
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">
-              {t('sale')}
-            </span>
-            <span className="px-2 py-1 rounded-full text-xs font-bold bg-foreground text-background">
+          <div className="absolute left-2 top-2 flex gap-1">
+            <span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-medium text-destructive-foreground">{t('sale')}</span>
+            <span className="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-bold text-background">
               -{Math.round(((product.price - product.sale_price!) / product.price) * 100)}%
             </span>
-          </motion.div>
+          </div>
         )}
-        
-        {/* Product badges (New/Hot/Limited) */}
+
         {!isOnSale && badgeType && (
-          <div className="absolute top-3 left-3">
+          <div className="absolute left-2 top-2 scale-90 origin-top-left">
             <ProductBadge type={badgeType} />
           </div>
         )}
-        
-        {/* Quick Add to Cart button */}
-        {isInStock && (
-          <motion.button
-            onClick={handleQuickAdd}
-            initial={{ opacity: 0, y: 10 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-          >
-            <ShoppingBag className="w-4 h-4" />
-          </motion.button>
-        )}
-        
-        {/* Stock urgency indicator */}
-        {isLowStock && (
-          <motion.div 
-            className="absolute bottom-3 left-3"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-warning text-warning-foreground">
-              <AlertTriangle className="w-3 h-3" />
-              {product.stock} {t('unitsLeft')}
-            </span>
-          </motion.div>
-        )}
-        
-        {/* Wishlist button */}
-        <motion.button
-          onClick={handleWishlistClick}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+
+        <button
+          type="button"
+          aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+          onClick={(event) => { event.stopPropagation(); toggleWishlist(product); }}
           className={cn(
-            "absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all",
-            inWishlist 
-              ? "bg-destructive text-destructive-foreground" 
-              : "bg-background/80 hover:bg-background text-foreground"
+            'absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full transition-colors',
+            inWishlist ? 'bg-destructive text-destructive-foreground' : 'bg-background/85 text-foreground hover:bg-background'
           )}
         >
-          <Heart className={cn("w-4 h-4", inWishlist && "fill-current")} />
-        </motion.button>
-        
-        {/* Out of stock overlay */}
-        {!isInStock && (
-          <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-            <span className="px-4 py-2 rounded-full bg-destructive text-destructive-foreground text-sm font-medium">
-              {t('outOfStock')}
-            </span>
-          </div>
-        )}
-        
-        {/* View details overlay */}
+          <Heart className={cn('h-3.5 w-3.5', inWishlist && 'fill-current')} />
+        </button>
+
         {isInStock && (
-          <motion.div 
-            className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center"
-            initial={false}
+          <button
+            type="button"
+            aria-label={`Add ${product.name} to cart`}
+            onClick={(event) => { event.stopPropagation(); addItem(product); }}
+            className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-transform hover:scale-105 md:opacity-0 md:group-hover:opacity-100"
           >
-            <motion.span 
-              className="bg-background/90 px-4 py-2 rounded-full text-sm font-medium"
-              initial={{ opacity: 0, y: 10 }}
-              whileHover={{ opacity: 1, y: 0 }}
-              style={{ opacity: 0 }}
-            >
-              View Details
-            </motion.span>
-          </motion.div>
+            <ShoppingBag className="h-3.5 w-3.5" />
+          </button>
+        )}
+
+        {isLowStock && (
+          <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-medium text-warning-foreground">
+            <AlertTriangle className="h-2.5 w-2.5" />
+            {product.stock} {t('unitsLeft')}
+          </span>
+        )}
+
+        {!isInStock && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/65">
+            <span className="rounded-full bg-destructive px-3 py-1 text-xs font-medium text-destructive-foreground">{t('outOfStock')}</span>
+          </div>
         )}
       </div>
 
-      {/* Content */}
-      <motion.div 
-        className="p-4"
-        style={{ transform: 'translateZ(10px)' }}
-      >
-        <h3 className="font-display text-lg font-semibold text-foreground mb-1 line-clamp-1">
-          {product.name}
-        </h3>
-        
-        {/* Star Rating */}
-        <div className="mb-2">
-          <StarRating rating={mockRating} size="sm" />
-        </div>
-        
+      <div className="p-2.5 sm:p-3">
+        <h3 className="line-clamp-1 text-sm font-semibold text-foreground sm:text-base">{product.name}</h3>
         {product.description && (
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2 font-body">
-            {product.description}
-          </p>
+          <p className="mt-1 hidden line-clamp-1 text-xs text-muted-foreground sm:block">{product.description}</p>
         )}
-        
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-foreground">
-              {formatPrice(displayPrice)}
-            </span>
-            {isOnSale && (
-              <span className="text-sm text-muted-foreground line-through">
-                {formatPrice(product.price)}
-              </span>
-            )}
-          </div>
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-base font-bold text-foreground sm:text-lg">{formatPrice(displayPrice)}</span>
+          {isOnSale && <span className="text-xs text-muted-foreground line-through">{formatPrice(product.price)}</span>}
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </motion.article>
   );
 }

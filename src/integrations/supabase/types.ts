@@ -483,6 +483,24 @@ export type Database = {
         }
         Relationships: []
       }
+      storefront_settings: {
+        Row: {
+          id: number
+          show_new_arrivals: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          show_new_arrivals?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          show_new_arrivals?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

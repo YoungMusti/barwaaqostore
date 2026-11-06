@@ -17,13 +17,14 @@ import { ProductVariantsManager } from '@/components/admin/ProductVariantsManage
 
 import { SaleBannerManager } from '@/components/admin/SaleBannerManager';
 import { SalesCharts } from '@/components/admin/SalesCharts';
+import { StorefrontSettings } from '@/components/admin/StorefrontSettings';
 
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [activeTab, setActiveTab] = useState<'insights' | 'products' | 'orders' | 'categories' | 'users' | 'analytics' | 'flash-sale'>('insights');
+  const [activeTab, setActiveTab] = useState<'insights' | 'products' | 'orders' | 'categories' | 'storefront' | 'users' | 'analytics' | 'flash-sale'>('insights');
   const [isLoading, setIsLoading] = useState(true);
   const [productDialog, setProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -363,7 +364,7 @@ export default function AdminDashboard() {
             { key: 'products', icon: Package, label: 'Products' },
             { key: 'orders', icon: ShoppingCart, label: 'Orders' },
             { key: 'categories', icon: Grid, label: 'Categories' },
-            
+            { key: 'storefront', icon: Settings2, label: 'Storefront' },
             { key: 'flash-sale', icon: Flame, label: 'Flash Sale' },
             { key: 'users', icon: Users, label: 'Admin Users' },
           ].map(tab => (
@@ -668,6 +669,8 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'orders' && <AdminOrders />}
+
+        {activeTab === 'storefront' && <StorefrontSettings />}
 
         {activeTab === 'categories' && (
           <div className="bg-card rounded-xl border p-6">

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import { useLanguage } from '@/hooks/useLanguage';
 import { Product } from '@/types/database';
 import { DepartmentKey } from '@/lib/departments';
+import { shouldShowNewArrivals } from '@/lib/storefront';
 import { Button } from '@/components/ui/button';
 
 interface NewArrivalsShowcaseProps {
@@ -21,117 +21,87 @@ interface ShowcaseItem {
 
 export function NewArrivalsShowcase({ onProductClick, products, department }: NewArrivalsShowcaseProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showcaseItems, setShowcaseItems] = useState<ShowcaseItem[]>([]);
-  const { t } = useLanguage();
+  const showcaseItems = useMemo<ShowcaseItem[]>(() => [...products]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .filter(product => product.stock > 0 && product.image_url)
+    .slice(0, 8)
+    .map(product => ({
+      image: product.image_url!,
+      name: product.name,
+      tag: product.category?.name || 'Collection',
+      product,
+    })), [products]);
 
-  useEffect(() => {
-        const items: ShowcaseItem[] = [...products]
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .filter(p => p.stock > 0)
-          .flatMap((p) => p.image_url ? [{
-            image: p.image_url,
-            name: p.name,
-            tag: p.category?.name || 'Collection',
-            product: p,
-          }] : []);
-        setShowcaseItems(items);
-        setActiveIndex(0);
-  }, [products]);
+  useEffect(() => setActiveIndex(0), [department]);
 
-  if (showcaseItems.length === 0) return null;
+  if (!shouldShowNewArrivals(showcaseItems.length)) return null;
 
-  const next = () => setActiveIndex((i) => (i + 1) % showcaseItems.length);
-  const prev = () => setActiveIndex((i) => (i - 1 + showcaseItems.length) % showcaseItems.length);
-
-  const getVisibleItems = () => {
-    const items = [];
-    for (let i = -2; i <= 2; i++) {
-      const idx = (activeIndex + i + showcaseItems.length) % showcaseItems.length;
-      items.push({ ...showcaseItems[idx], offset: i, idx });
-    }
-    return items;
-  };
+  const next = () => setActiveIndex(index => (index + 1) % showcaseItems.length);
+  const prev = () => setActiveIndex(index => (index - 1 + showcaseItems.length) % showcaseItems.length);
+  const maxOffset = Math.min(2, Math.floor((showcaseItems.length - 1) / 2));
+  const visibleItems = Array.from({ length: maxOffset * 2 + 1 }, (_, index) => index - maxOffset).map(offset => {
+    const itemIndex = (activeIndex + offset + showcaseItems.length) % showcaseItems.length;
+    return { ...showcaseItems[itemIndex], offset, itemIndex };
+  });
 
   return (
-    <section className="py-16 overflow-hidden relative">
+    <section className="relative overflow-hidden py-6 md:py-8">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
-      
       <div className="container relative">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <Sparkles className="w-4 h-4" />
+        <div className="mb-4 text-center md:mb-6">
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <Sparkles className="h-3.5 w-3.5" />
             New Collection
           </div>
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Fresh Arrivals
-          </h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            {department === 'cosmetics' ? 'Explore our latest beauty collection' : department ? 'Explore our latest collection of premium footwear' : 'Explore the latest from all our collections'}
+          <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">Fresh Arrivals</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {department === 'cosmetics' ? 'Explore our latest beauty collection' : department ? 'Explore our latest premium footwear' : 'Explore the latest from all our collections'}
           </p>
-        </motion.div>
+        </div>
 
-        <div className="relative flex items-center justify-center h-[420px] md:h-[480px]">
-          <Button variant="outline" size="icon" aria-label="Previous arrival"
-            onClick={prev}
-            className="absolute left-2 md:left-8 z-20 w-10 h-10 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <Button variant="outline" size="icon" aria-label="Next arrival"
-            onClick={next}
-            className="absolute right-2 md:right-8 z-20 w-10 h-10 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+        <div className="relative flex h-[280px] items-center justify-center md:h-[320px]">
+          {showcaseItems.length > 1 && (
+            <>
+              <Button variant="outline" size="icon" aria-label="Previous arrival" onClick={prev} className="absolute left-0 z-20 h-9 w-9 rounded-full bg-background/90 md:left-8">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" aria-label="Next arrival" onClick={next} className="absolute right-0 z-20 h-9 w-9 rounded-full bg-background/90 md:right-8">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
 
-          <AnimatePresence mode="popLayout">
-            {getVisibleItems().map((item) => {
+          <AnimatePresence initial={false} mode="popLayout">
+            {visibleItems.map(item => {
               const isCenter = item.offset === 0;
-              const scale = isCenter ? 1 : 0.75 - Math.abs(item.offset) * 0.08;
-              const x = item.offset * (isCenter ? 0 : 220);
-              const zIndex = 10 - Math.abs(item.offset);
-              const opacity = isCenter ? 1 : 0.6 - Math.abs(item.offset) * 0.15;
-
               return (
                 <motion.div
-                  key={`${item.idx}-${item.offset}`}
-                  className="absolute cursor-pointer"
+                  key={`${item.itemIndex}-${item.offset}`}
+                  className="absolute"
+                  initial={{ opacity: 0 }}
                   animate={{
-                    x,
-                    scale,
-                    zIndex,
-                    opacity: Math.max(opacity, 0.2),
+                    x: item.offset * 170,
+                    scale: isCenter ? 1 : 0.72,
+                    opacity: isCenter ? 1 : Math.max(0.25, 0.55 - Math.abs(item.offset) * 0.15),
                   }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  style={{ zIndex }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+                  style={{ zIndex: 10 - Math.abs(item.offset) }}
                 >
-                  <div className={`relative rounded-2xl overflow-hidden shadow-2xl transition-shadow ${isCenter ? 'ring-2 ring-primary/30' : ''}`}>
-                    <Button variant="ghost" aria-label={`View ${item.name}`} onClick={() => onProductClick?.(item.product)} className="block h-auto p-0 rounded-none hover:bg-transparent">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-56 h-72 md:w-72 md:h-96 object-cover"
-                      draggable={false}
-                    />
+                  <div className={`relative overflow-hidden rounded-xl shadow-lg ${isCenter ? 'ring-1 ring-primary/25' : ''}`}>
+                    <Button
+                      variant="ghost"
+                      aria-label={`View ${item.name}`}
+                      onClick={() => onProductClick?.(item.product)}
+                      className="block h-auto rounded-none p-0 hover:bg-transparent"
+                    >
+                      <img src={item.image} alt={item.name} loading="lazy" draggable={false} className="h-56 w-44 object-cover md:h-64 md:w-56" />
                     </Button>
                     {isCenter && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="pointer-events-none absolute bottom-0 inset-x-0 bg-background/90 p-5"
-                      >
-                        <span className="inline-block px-2.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium mb-2">
-                          {item.tag}
-                        </span>
-                        <h3 className="text-foreground font-display text-xl font-bold">
-                          {item.name}
-                        </h3>
-                      </motion.div>
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-background/90 p-3">
+                        <span className="mb-1 inline-block rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground">{item.tag}</span>
+                        <h3 className="line-clamp-1 font-display text-base font-bold text-foreground">{item.name}</h3>
+                      </div>
                     )}
                   </div>
                 </motion.div>
@@ -140,17 +110,20 @@ export function NewArrivalsShowcase({ onProductClick, products, department }: Ne
           </AnimatePresence>
         </div>
 
-        <div className="flex justify-center flex-wrap gap-1.5 mt-6">
-          {showcaseItems.map((_, i) => (
-            <Button variant="ghost" size="icon" aria-label={`Show arrival ${i + 1}`}
-              key={i}
-              onClick={() => setActiveIndex(i)}
-              className={`h-2 p-0 rounded-full transition-all ${
-                i === activeIndex ? 'w-8 bg-primary' : 'w-2 bg-muted-foreground/30'
-              }`}
-            />
-          ))}
-        </div>
+        {showcaseItems.length > 1 && (
+          <div className="mt-3 flex justify-center gap-1.5">
+            {showcaseItems.map((item, index) => (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Show arrival ${index + 1}`}
+                key={item.product.id}
+                onClick={() => setActiveIndex(index)}
+                className={`h-1.5 rounded-full p-0 transition-all ${index === activeIndex ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
