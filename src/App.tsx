@@ -49,6 +49,7 @@ function AnimatedRoutes() {
           <Route path="/" element={<Index />} />
           <Route path="/mens-shoes" element={<Index department="men" />} />
           <Route path="/womens-shoes" element={<Index department="women" />} />
+          <Route path="/product/:id" element={<Index />} />
           <Route path="/cosmetics" element={<Index department="cosmetics" />} />
           
           <Route path="/admin" element={<AdminLogin />} />

@@ -41,10 +41,14 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { ProductGridSkeleton } from '@/components/store/ProductCardSkeleton';
 import { motion } from 'framer-motion';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DepartmentKey, departments, visibleCategories } from '@/lib/departments';
 
-export default function Index({ department }: { department?: DepartmentKey }) {
+export default function Index({ department, productId }: { department?: DepartmentKey; productId?: string }) {
+  const routeParams = useParams();
+  const linkedProductId = productId ?? routeParams.id;
+  const navigate = useNavigate();
   const [allProducts, setProducts] = useState<Product[]>([]);
   const [allCategories, setCategories] = useState<Category[]>([]);
   const categories = useMemo(() => visibleCategories(allCategories, department), [allCategories, department]);
@@ -63,6 +67,13 @@ export default function Index({ department }: { department?: DepartmentKey }) {
   // Advanced filter state
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [sortBy, setSortBy] = useState('default');
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const sizeOptions = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach(p => p.product_sizes?.forEach(s => { if (s.stock > 0) set.add(s.eu_size); }));
+    return [...set].sort((a, b) => parseFloat(a) - parseFloat(b) || a.localeCompare(b));
+  }, [products]);
   
   const { t, language } = useLanguage();
   const { addItem: addToRecentlyViewed } = useRecentlyViewed();
@@ -80,7 +91,7 @@ export default function Index({ department }: { department?: DepartmentKey }) {
   useEffect(() => {
     async function fetchData() {
       const [productsRes, categoriesRes] = await Promise.all([
-        supabase.from('products').select('*, category:categories(*)'),
+        supabase.from('products').select('*, category:categories(*), product_sizes(*)'),
         supabase.from('categories').select('*'),
       ]);
 
@@ -131,6 +142,8 @@ export default function Index({ department }: { department?: DepartmentKey }) {
         if (cat && (!cat.enabled || categoryStockMap[cat.id] === 0)) return false;
       }
       const effectivePrice = p.is_on_sale && p.sale_price ? p.sale_price : p.price;
+      if (inStockOnly && p.stock <= 0) return false;
+      if (selectedSize && !p.product_sizes?.some(s => s.eu_size === selectedSize && s.stock > 0)) return false;
       if (effectivePrice < priceRange[0] || effectivePrice > priceRange[1]) return false;
       return true;
     });
@@ -159,7 +172,7 @@ export default function Index({ department }: { department?: DepartmentKey }) {
     }
 
     return result;
-  }, [products, categories, selectedCategory, showSaleOnly, priceRange, sortBy, categoryStockMap]);
+  }, [products, categories, selectedCategory, showSaleOnly, priceRange, sortBy, categoryStockMap, inStockOnly, selectedSize]);
 
   const handleCategorySelect = (categoryId: string | null) => {
     setSelectedCategory(categoryId);
@@ -182,6 +195,24 @@ export default function Index({ department }: { department?: DepartmentKey }) {
     setSelectedCategory(null);
   };
 
+  // Open product from a shared link (/product/:id)
+  useEffect(() => {
+    if (!linkedProductId || allProducts.length === 0) return;
+    const found = allProducts.find(p => p.id === linkedProductId);
+    if (found) {
+      setSelectedProduct(found);
+      setShowProductModal(true);
+      addToRecentlyViewed(found);
+      document.title = `${found.name} | Barwaaqo Store`;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkedProductId, allProducts.length]);
+
+  const handleModalChange = (open: boolean) => {
+    setShowProductModal(open);
+    if (!open && linkedProductId) navigate('/', { replace: true });
+  };
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setShowProductModal(true);
@@ -200,6 +231,8 @@ export default function Index({ department }: { department?: DepartmentKey }) {
   const resetFilters = () => {
     setPriceRange([priceBounds.min, priceBounds.max]);
     setSortBy('default');
+    setSelectedSize(null);
+    setInStockOnly(false);
     setSelectedCategory(null);
     setShowSaleOnly(false);
   };
@@ -300,6 +333,11 @@ export default function Index({ department }: { department?: DepartmentKey }) {
           sortBy={sortBy}
           onSortChange={setSortBy}
           onReset={resetFilters}
+          sizes={sizeOptions}
+          selectedSize={selectedSize}
+          onSizeChange={setSelectedSize}
+          inStockOnly={inStockOnly}
+          onInStockChange={setInStockOnly}
         />
 
         {isLoading ? (
@@ -398,7 +436,7 @@ export default function Index({ department }: { department?: DepartmentKey }) {
       <ProductDetailModal 
         product={selectedProduct} 
         open={showProductModal} 
-        onOpenChange={setShowProductModal} 
+        onOpenChange={handleModalChange} 
       />
       <FloatingWhatsApp />
       <BackToTop />
