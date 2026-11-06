@@ -44,7 +44,7 @@ export function HeroSection({ onCategorySelect, products, categories }: HeroSect
     offset: ['start start', 'end start']
   });
   
-  const parallaxY = useTransform(scrollYProgress, [0, 1], [0, 100]);
+  const parallaxY = useTransform(scrollYProgress, [0, 1], [0, 40]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.3]);
 
   // Fetch enabled categories with in-stock products
@@ -107,10 +107,10 @@ export function HeroSection({ onCategorySelect, products, categories }: HeroSect
   return (
     <motion.section 
       ref={sectionRef} 
-      className="container py-6 relative"
+      className="container relative py-3 md:py-4"
       style={{ opacity }}
     >
-      <div className="relative rounded-3xl overflow-hidden shadow-xl"
+      <div className="relative overflow-hidden rounded-2xl shadow-lg"
         style={{
           background: 'linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(220 20% 96%) 50%, hsl(var(--secondary)) 100%)'
         }}
@@ -128,9 +128,9 @@ export function HeroSection({ onCategorySelect, products, categories }: HeroSect
               const currentImg = activeImageIndex[index] || 0;
               return (
                 <CarouselItem key={index} className="pl-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 min-h-[350px] md:min-h-[400px]">
+                  <div className="grid grid-cols-1 md:min-h-[320px] md:grid-cols-2">
                     {/* Text Content - Left Side */}
-                    <div className="flex flex-col justify-center p-8 md:p-12 order-2 md:order-1 relative z-10">
+                    <div className="relative z-10 order-2 flex flex-col justify-center p-5 md:order-1 md:p-8">
                       <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: current === index ? 1 : 0, x: current === index ? 0 : -30 }}
@@ -143,7 +143,7 @@ export function HeroSection({ onCategorySelect, products, categories }: HeroSect
                           </span>
                         </div>
                         
-                        <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+                        <h2 className="mb-3 font-display text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
                           <GradientText>
                             {language === 'so' ? slide.titleSo : slide.titleEn}
                           </GradientText>
@@ -154,7 +154,7 @@ export function HeroSection({ onCategorySelect, products, categories }: HeroSect
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: current === index ? 1 : 0, x: current === index ? 0 : -30 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
-                        className="text-base sm:text-lg text-muted-foreground max-w-md mb-6 font-body"
+                        className="mb-4 max-w-md font-body text-sm text-muted-foreground sm:text-base"
                       >
                         {language === 'so' ? slide.subtitleSo : slide.subtitleEn}
                       </motion.p>
@@ -166,8 +166,8 @@ export function HeroSection({ onCategorySelect, products, categories }: HeroSect
                       >
                         <Button 
                           onClick={() => onCategorySelect?.(slide.categorySearch)}
-                          className="mb-6 gap-2 rounded-full group"
-                          size="lg"
+                          className="group mb-4 gap-2 rounded-full"
+                          size="default"
                         >
                           {language === 'so' ? 'Soo Iibso Hadda' : 'Shop Now'}
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -178,11 +178,11 @@ export function HeroSection({ onCategorySelect, products, categories }: HeroSect
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: current === index ? 1 : 0, y: current === index ? 0 : 20 }}
                         transition={{ duration: 0.5, delay: 0.4 }}
-                        className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"
+                        className="hidden flex-wrap items-center gap-2 text-xs text-muted-foreground sm:flex"
                       >
                         <span className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
                           <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
-                          {language === 'so' ? 'Gaadiid Bilaash' : 'Free Delivery'}
+                          {language === 'so' ? '$2 Gaadiid Muqdisho' : '$2 Mogadishu Delivery'}
                         </span>
                         <span className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-full backdrop-blur-sm">
                           <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
@@ -193,7 +193,7 @@ export function HeroSection({ onCategorySelect, products, categories }: HeroSect
                     
                     {/* Image Gallery - Right Side */}
                     <motion.div 
-                      className="relative h-[250px] md:h-full order-1 md:order-2 overflow-hidden"
+                      className="relative order-1 h-[180px] overflow-hidden md:order-2 md:h-full"
                       style={{ y: parallaxY }}
                     >
                       {slide.images.map((img, imgIdx) => (

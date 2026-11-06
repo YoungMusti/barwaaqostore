@@ -44,6 +44,8 @@ import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DepartmentKey, departments, visibleCategories } from '@/lib/departments';
+import { useStorefrontSettings } from '@/hooks/useStorefrontSettings';
+import { shouldShowNewArrivals } from '@/lib/storefront';
 
 export default function Index({ department, productId }: { department?: DepartmentKey; productId?: string }) {
   const routeParams = useParams();
@@ -77,6 +79,7 @@ export default function Index({ department, productId }: { department?: Departme
   
   const { t, language } = useLanguage();
   const { addItem: addToRecentlyViewed } = useRecentlyViewed();
+  const { showNewArrivals } = useStorefrontSettings();
 
   // Calculate price bounds
   const priceBounds = useMemo(() => {
@@ -259,26 +262,26 @@ export default function Index({ department, productId }: { department?: Departme
       <AnnouncementBar />
       <SaleCountdownBanner />
       <Header products={products} onProductClick={handleProductClick} />
-      <section className="container pt-6 pb-3">
+      <section className="container pb-2 pt-4">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-secondary/60 to-accent/10 px-6 py-6 sm:px-8 sm:py-8"
+          className="relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-primary/10 via-secondary/60 to-accent/10 px-4 py-4 sm:px-6 sm:py-5"
         >
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/15 blur-3xl" aria-hidden />
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-2">Barwaaqo Store</p>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
             {page ? (language === 'so' ? page.nameSo : page.name) : (language === 'so' ? 'Dhammaan Ururinta' : 'All Collections')}
           </h1>
-          <p className="mt-2 max-w-xl text-sm sm:text-base text-muted-foreground">
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
             {department === 'men' && (language === 'so' ? 'Kabo raaxo leh oo ragga ah, qiimo jaban.' : 'Comfortable, stylish trainers for every day — at prices you’ll love.')}
             {department === 'women' && (language === 'so' ? 'Kabo qurux badan oo dumarka ah.' : 'Elegant flats, heels and trainers picked for you.')}
             {department === 'cosmetics' && (language === 'so' ? 'Qurxin iyo daryeel maqaar tayo leh.' : 'Makeup, skincare and fragrance to feel your best.')}
             {!department && (language === 'so' ? 'Kabaha ragga, dumarka iyo qurxinta — hal meel.' : 'Men’s shoes, women’s shoes and cosmetics — all in one place.')}
           </p>
           {!isLoading && (
-            <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-background/80 px-3 py-1 text-xs font-medium text-foreground">
+            <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground">
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
               {products.length} {language === 'so' ? 'alaab' : products.length === 1 ? 'product' : 'products'}
             </span>
@@ -289,7 +292,9 @@ export default function Index({ department, productId }: { department?: Departme
       <TrustSignals />
       
       {/* New Arrivals Showcase */}
-      <NewArrivalsShowcase products={products} department={department} onProductClick={handleProductClick} />
+      {shouldShowNewArrivals(products.length, showNewArrivals) && (
+        <NewArrivalsShowcase products={products} department={department} onProductClick={handleProductClick} />
+      )}
       
       <CategoryQuickLinks 
         categories={categories}
@@ -302,7 +307,7 @@ export default function Index({ department, productId }: { department?: Departme
       {/* Promo Banner */}
       <PromoBanner onShopSale={handleSaleSelect} />
 
-      <main id="products-section" className="container py-12 flex-1">
+      <main id="products-section" className="container flex-1 py-6 md:py-8">
         <Breadcrumbs items={[
           { label: selectedCategory 
             ? (categories.find(c => c.id === selectedCategory)?.name || 'Products')
@@ -313,7 +318,7 @@ export default function Index({ department, productId }: { department?: Departme
         <div className="flex justify-end mb-2">
           <WishlistShareButton />
         </div>
-        <div className="mb-6">
+        <div className="mb-4">
           <CategoryFilter
             categories={categories}
             selectedCategory={selectedCategory}
@@ -374,7 +379,7 @@ export default function Index({ department, productId }: { department?: Departme
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+                className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
               >
                 {filteredProducts.slice(0, visibleCount).map((product, index) => (
                   <motion.div key={product.id} variants={itemVariants}>
